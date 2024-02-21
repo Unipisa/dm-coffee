@@ -1,4 +1,14 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+This is a [Next.js](https://nextjs.org/) project.
+You must have installed [Node.js](https://nodejs.org/en/) to run this project:
+```bash
+sudo apt install npm
+sudo npm install -g n
+sudo n stable
+```
+then you should install the required `npm` packages:
+```bash             
+npm install
+```
 
 ## Getting Started
 
