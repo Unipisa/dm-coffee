@@ -1,4 +1,5 @@
-import Image from "next/image";
+"use client"
+import { useState } from "react";
 
 export default function Home() {
   return (
@@ -10,17 +11,27 @@ export default function Home() {
 }
 
 function AddCoffee() {
+  const [count, setCount] = useState(1)
+  const email = "pippo@gmail.com"
+
   return <div>
     <h1>Add Coffee</h1>
-    <form>
-      <select name="count">
-        <option value="1" selected>1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
+      <select name="count" value={count} onChange={e => setCount(parseInt(e.target.value))}>
+        {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
       </select>
-      <button className="button" type="submit">Add</button>
-    </form>
+      <button className="button" onClick={submit}>
+        Add
+      </button>
   </div>
+
+  async function submit(){
+    const response = await fetch("/api/coffee", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, count }),
+    });
+    if (response.ok) {
+      console.log("Coffee added");
+    }
+  };
 }
