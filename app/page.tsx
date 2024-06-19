@@ -1,7 +1,38 @@
 "use client"
 import { useState } from 'react'
+import { useSession, signIn, signOut } from 'next-auth/react'
+import { SessionProvider } from 'next-auth/react'
+import './globals.css'; // Import global styles if you have them
+import { Session } from 'inspector';
 
 export default function Home() {
+  return <SessionProvider>
+    <Auth />
+    <CoffeeForm />
+  </SessionProvider>
+}
+
+function Auth() {
+  const { data: session } = useSession()
+  if (session?.user) {
+    return <>
+      <p>signed in as {session.user.email}</p>
+      <button 
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" 
+        onClick={() => signOut()}>sign out</button>
+    </>
+  } else {
+    return <>
+      <p>not signed in</p>
+      <button 
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" 
+        onClick={() => signIn()}
+      >sign in</button>
+    </>
+  }
+}
+
+function CoffeeForm() {
   const [code, setCode] = useState('12345')
   const [count, setCount] = useState(1)
 
@@ -83,3 +114,4 @@ export default function Home() {
     const data = await response.json()
   }
 }
+
