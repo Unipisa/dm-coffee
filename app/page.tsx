@@ -33,7 +33,6 @@ function Auth() {
 }
 
 function CoffeeForm() {
-  const [code, setCode] = useState('12345')
   const [count, setCount] = useState(1)
 
   return <main>
@@ -41,25 +40,10 @@ function CoffeeForm() {
     <form>
       <div className="grid gap-6 mb-6 md:grid-cols-1">
         <div>
-            <label 
-              htmlFor="code" 
-              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                codice
-            </label>
-            <input 
-              type="text" 
-              id="code" 
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
-              placeholder="codice" 
-              value={code}
-              onChange={e => setCode(e.target.value)}
-              required />
-        </div>      
-        <div>
           <label
             htmlFor="count"
             className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-              numero
+              quanti caffé?
           </label>
           <select 
             id="count" 
@@ -91,13 +75,14 @@ function CoffeeForm() {
   </main>
 
   async function submit(e: any) {
+    console.log("submitting", count)
     e.preventDefault()
     const query = `
-      mutation  PostMutation($code: String!, $count: Int!) {
-        post(code: $code, count: $count)
+      mutation  PostMutation($count: Int!) {
+        post(count: $count)
       }`
 
-    const variables = { code, count }
+    const variables = { count }
     
     const requestOptions = {
       method: 'POST',

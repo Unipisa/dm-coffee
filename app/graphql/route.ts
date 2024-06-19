@@ -9,13 +9,13 @@ const resolvers = {
     hello: () => 'world',
   },
   Mutation: {
-    post: async(_: any, {code, count}: any) => {
+    post: async(_: any, {count}: any, context: any) => {
       const client = await clientPromise
+      console.log("mutation context:", context)
       try {
         await client.connect()
         const account = client.db("coffee").collection("account")
         const result = await account.insertOne({
-          code,
           count,
           timestamp: new Date()
         })
@@ -34,7 +34,7 @@ const typeDefs = gql`
     hello: String
   }
   type Mutation {
-    post(code: String!, count: Int!): String
+    post(count: Int!): String
   }
 `;
 
@@ -44,12 +44,10 @@ const server = new ApolloServer({
 });
 
 const handler = startServerAndCreateNextHandler(server, {
-    context: async (req, res) => ({ req, res, user: null }),
+    context: async (req, res) => { 
+      console.log("context:", req, res)
+      return { req, res, user: null }
+    }
 });
-/*
-startServerAndCreateNextHandler(server, {
-  context: async (req, res) => ({ req, res, user: await getLoggedInUser(req) }),
-});
-*/
 
 export { handler as GET, handler as POST };
