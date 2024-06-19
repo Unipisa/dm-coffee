@@ -59,7 +59,7 @@ export default function Home() {
     </form>
   </main>
 
-  async function submit(e) {
+  async function submit(e: any) {
     e.preventDefault()
     const query = `
       mutation  PostMutation($code: String!, $count: Int!) {
