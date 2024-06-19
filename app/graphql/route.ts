@@ -1,7 +1,8 @@
-import { ApolloServer } from '@apollo/server';
-import { startServerAndCreateNextHandler } from '@as-integrations/next';
-import { gql } from 'graphql-tag';
-const { MongoClient } = require('mongodb');
+import { ApolloServer } from '@apollo/server'
+import { startServerAndCreateNextHandler } from '@as-integrations/next'
+import { gql } from 'graphql-tag'
+
+import clientPromise from "../db"
 
 const resolvers = {
   Query: {
@@ -9,8 +10,7 @@ const resolvers = {
   },
   Mutation: {
     post: async(_: any, {code, count}: any) => {
-      const uri = "mongodb://localhost:27017/coffee"
-      const client = new MongoClient(uri)
+      const client = await clientPromise
       try {
         await client.connect()
         const account = client.db("coffee").collection("account")
