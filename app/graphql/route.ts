@@ -6,11 +6,19 @@ const resolvers = {
   Query: {
     hello: () => 'world',
   },
+  Mutation: {
+    post: async(_: any, {code, count}: any) => {
+      return "good!"
+    }
+  }
 };
 
 const typeDefs = gql`
   type Query {
     hello: String
+  }
+  type Mutation {
+    post(code: String!, count: Int!): String
   }
 `;
 
