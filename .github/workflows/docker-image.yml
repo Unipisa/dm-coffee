@@ -44,6 +44,6 @@ jobs:
       with:
         push: true
         context: .
-        tags: dm-coffee/dm-coffe:latest , dm-coffee/dm-coffee:${{ github.ref_name }} , paolini/scandai:${{ github.ref_name }}_${{ env.VERSION }} 
+        tags: harbor.cs.dm.unipi.it/dm-coffee/dm-coffee:latest , harbor.cs.dm.unipi.it/dm-coffee/dm-coffee:${{ github.ref_name }} , harbor.cs.dm.unipi.it/dm-coffee/dm-coffee:${{ github.ref_name }}_${{ env.VERSION }} 
 #        tags: ${{ steps.meta.outputs.tags }}
 #        labels: ${{ steps.meta.outputs.labels }}
