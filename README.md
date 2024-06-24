@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+## Configuration
+
+Configuration is done through environment variables. You can create a `.env` file in the root directory. See the file `app.config.ts` for the list of available environment variables.
+
 ## Getting Started
 
 First, run the development server:

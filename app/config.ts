@@ -9,6 +9,13 @@ const config = singleton || (() => {
         GOOGLE_AUTH_CLIENT_SECRET: process.env.GOOGLE_AUTH_CLIENT_SECRET || '',
         DATABASE_NAME,
         DATABASE_URI: process.env.DATABASE_URI || ('mongodb://localhost:27017/' + DATABASE_NAME),
+        // the following variables are used by next-auth.
+        // they are included here only for reference 
+        // since they are extracted directly from 
+        // the environment. 
+        // Changing them here will have no effect.
+        NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     }
 
     console.log(` ______   _______         _______  _______  _______  _______  _______  _______ 
