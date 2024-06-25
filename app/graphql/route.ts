@@ -19,6 +19,7 @@ type Context = {
 const resolvers = {
   Query: {
     hello: () => 'world',
+
     credit: async(_: any, __: {}, context: Context) => {
       if (!context.user) throw new Error("not logged in")
       const client = await clientPromise
@@ -27,9 +28,10 @@ const resolvers = {
         { $match: { email: context.user.email } },
         { $group: { _id: null, creditCents: { $sum: "$amountCents" } } }
       ]).toArray()
-      if (result.length === 0) return {error: "no account found", balance: 0}
+      if (result.length === 0) return 0
       return result[0].creditCents
     },
+
     transactions: async(_: any, __: {}, context: Context) => {
       if (!context.user) throw new Error("not logged in")
       const client = await clientPromise
