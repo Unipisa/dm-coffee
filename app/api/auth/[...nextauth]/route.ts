@@ -1,4 +1,4 @@
-import NextAuth, {User, Account, Profile, AuthOptions} from "next-auth"
+import NextAuth, {AuthOptions} from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter"
 
@@ -12,7 +12,7 @@ const {
   DATABASE_NAME,
 } = config
 
-export const authOptions: AuthOptions = {
+const authOptions: AuthOptions = {
   providers: discoverProviders(),
   callbacks: {
     async signIn({ account, profile }) {
