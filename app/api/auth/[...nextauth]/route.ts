@@ -1,4 +1,4 @@
-import NextAuth, {User, Account, Profile} from "next-auth"
+import NextAuth, {User, Account, Profile, AuthOptions} from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter"
 
@@ -12,8 +12,7 @@ const {
   DATABASE_NAME,
 } = config
 
-
-const handler = NextAuth({
+export const authOptions: AuthOptions = {
   providers: discoverProviders(),
   callbacks: {
     async signIn({ account, profile }) {
@@ -26,10 +25,16 @@ const handler = NextAuth({
       return true
     }
   },
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   adapter: MongoDBAdapter(clientPromise, {
     databaseName: DATABASE_NAME,
   })
-})
+}
+
+const handler = NextAuth(authOptions)
 
 export {handler as GET, handler as POST}
 

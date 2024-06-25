@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { SessionProvider } from 'next-auth/react'
 import './globals.css'; // Import global styles if you have them
-import { Session } from 'inspector';
 
 export default function Home() {
   return <SessionProvider>
@@ -23,21 +22,27 @@ function Auth() {
     </>
   } else {
     return <>
-      <p>not signed in</p>
       <button 
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" 
         onClick={() => signIn()}
-      >sign in</button>
+      >accedi</button>
     </>
   }
 }
 
 function CoffeeForm() {
   const [count, setCount] = useState(1)
+  const { data: session } = useSession()
+  const [ messages, setMessages ] = useState<string[]>([])
+
+  if (!session?.user) {
+    return <></>
+  }
 
   return <main>
     <h1>dm-coffee</h1>
     <form>
+      <Messages messages={messages} setMessages={setMessages} />
       <div className="grid gap-6 mb-6 md:grid-cols-1">
         <div>
           <label
@@ -79,7 +84,7 @@ function CoffeeForm() {
     e.preventDefault()
     const query = `
       mutation  PostMutation($count: Int!) {
-        post(count: $count)
+        coffee(count: $count)
       }`
 
     const variables = { count }
@@ -97,6 +102,21 @@ function CoffeeForm() {
     }
       
     const data = await response.json()
+    console.log("response", data)
+
+    if (data?.errors?.length > 0) {
+      data.errors.forEach((error: {message:string}) => {
+        setMessages(messages => [...messages, error.message])
+      })
+    } 
   }
 }
 
+function Messages({messages, setMessages}:{
+  messages: string[],
+  setMessages: (messages: string[]) => void
+}) {
+  return <>
+    {messages.map((message, i) => <p key={i}>{message}</p>)}
+  </>
+}

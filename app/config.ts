@@ -31,7 +31,9 @@ const config = singleton || (() => {
     console.log('config loaded: ', 
         Object.fromEntries(Object.entries(config).map(
             ([key, value]) => {
-                if (key.toUpperCase().includes('SECRET')) value=value.substring(0,2) + '....' + value.substring(value.length-2)
+                if (key.toUpperCase().includes('SECRET')) {
+                    if (value) value=value.substring(0,2) + '....' + value.substring(value.length-2)
+                    }
                 return [key, value]
             })))    
     return config
