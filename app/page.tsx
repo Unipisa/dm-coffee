@@ -11,6 +11,16 @@ const GET_CREDIT = gql`
   }
 `
 
+const GET_TRANSACTIONS = gql`
+  query GetTransactions {
+    transactions {
+      timestamp
+      amountCents
+      description
+    }
+  }
+`
+
 const COFFEE = gql`
   mutation PostMutation($count: Int!) {
     coffee(count: $count)
@@ -56,8 +66,9 @@ function CoffeeForm() {
   const [ messages, setMessages ] = useState<string[]>([])
   const creditQuery = useQuery(GET_CREDIT)
   const [submitCoffee, coffeeMutation] = useMutation(COFFEE, {
-    refetchQueries: [GET_CREDIT]
+    refetchQueries: [GET_CREDIT, GET_TRANSACTIONS]
   })
+  const transactionsQuery = useQuery(GET_TRANSACTIONS)
 
   if (!session?.user) {
     return <></>
@@ -105,6 +116,24 @@ function CoffeeForm() {
               ? "..." : creditQuery.error ? `errore: ${creditQuery.error.message}`
               : `€ ${(creditQuery.data.credit / 100).toFixed(2)}`
             }</p>
+        </div>
+        <div>
+          {transactionsQuery.loading 
+            ? "..."
+            : transactionsQuery.error
+            ? `errore: ${transactionsQuery.error.message}`
+            : <table className="table-auto">
+              <tbody>
+              {transactionsQuery.data.transactions.map((transaction: any, i: number) => 
+                  <tr key={i}>
+                    <td>{(new Date(transaction.timestamp)).toLocaleDateString('it')}</td>
+                    <td>{(transaction.amountCents/100).toFixed(2)}</td> 
+                    <td>{transaction.description}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          }
         </div>
       </div>
     </form>

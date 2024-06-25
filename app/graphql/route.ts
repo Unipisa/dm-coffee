@@ -22,48 +22,67 @@ const resolvers = {
     credit: async(_: any, __: {}, context: Context) => {
       if (!context.user) throw new Error("not logged in")
       const client = await clientPromise
-      try {
-        await client.connect()
-        const account = client.db("coffee").collection("account")
-        const result = await account.aggregate([
-          { $match: { email: context.user.email } },
-          { $group: { _id: null, creditCents: { $sum: "$amountCents" } } }
-        ]).toArray()
-        if (result.length === 0) return {error: "no account found", balance: 0}
-        return result[0].creditCents
-      } finally {
-        await client.close()
-      }
+      const account = client.db("coffee").collection("account")
+      const result = await account.aggregate([
+        { $match: { email: context.user.email } },
+        { $group: { _id: null, creditCents: { $sum: "$amountCents" } } }
+      ]).toArray()
+      if (result.length === 0) return {error: "no account found", balance: 0}
+      return result[0].creditCents
     },
+    transactions: async(_: any, __: {}, context: Context) => {
+      if (!context.user) throw new Error("not logged in")
+      const client = await clientPromise
+      const account = client.db("coffee").collection("account")
+      const result = await account.find({ email: context.user.email }).toArray()
+      return result
+    }
   },
   Mutation: {
     coffee: async(_: any, {count}: {count: number}, context: Context) => {
       if (!context.user) throw new Error("not logged in")
       const client = await clientPromise
       console.log("mutation context:", context)
-      try {
-        await client.connect()
-        const account = client.db("coffee").collection("account")
-        const result = await account.insertOne({
-          amountCents: -count * 20,
-          description: "coffee",
-          email: context.user.email,
-          timestamp: new Date()
-        })
-        return "ok!"
-      } catch(error) {
-        console.error("Error in post function:", error)
-      } finally {
-        await client.close()
+      const account = client.db("coffee").collection("account")
+      const result = await account.insertOne({
+        amountCents: -count * 20,
+        description: "coffee",
+        email: context.user.email,
+        timestamp: new Date()
+      })
+      return "ok!"
+    }
+  },
+  Timestamp: {
+    parseValue(value: number) {
+      return new Date(value)
+    },
+    serialize(value: Date) {
+      return value.toISOString()
+    },
+    parseLiteral(ast: any) {
+      if (ast.kind === 'StringValue') {
+        return new Date(ast.value)
       }
+      return null
     }
   }
-};
+}
 
 const typeDefs = gql`
+  scalar Timestamp
+
+  type Transaction {
+    amountCents: Int
+    description: String
+    email: String
+    timestamp: Timestamp
+  }
+
   type Query {
     hello: String
     credit: Int
+    transactions: [Transaction]
   }
   type Mutation {
     coffee(count: Int!): String

@@ -17,9 +17,22 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
+  max-width: 640px;
+  margin: 60px auto;
 }
 
 h1 {
   color: rgb(var(--foreground-rgb));
   font-size: 2rem;
+}
+
+table {
+  border-collapse: collapse;
+  border: 1px solid rgb(var(--foreground-rgb));
+  width: 100%;
+}
+
+table td {
+  border: 1px solid rgb(var(--foreground-rgb));
+  padding: 0.5rem;
 }
