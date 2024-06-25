@@ -3,11 +3,31 @@ import { useState } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { SessionProvider } from 'next-auth/react'
 import './globals.css'; // Import global styles if you have them
+import { ApolloClient, InMemoryCache, ApolloProvider, gql, useQuery, useMutation } from '@apollo/client';
+
+const GET_CREDIT = gql`
+  query GetCredit {
+    credit
+  }
+`
+
+const COFFEE = gql`
+  mutation PostMutation($count: Int!) {
+    coffee(count: $count)
+  }
+`
+
+const apolloClient = new ApolloClient({
+  uri: '/graphql',
+  cache: new InMemoryCache()
+})
 
 export default function Home() {
   return <SessionProvider>
-    <Auth />
-    <CoffeeForm />
+    <ApolloProvider client={apolloClient}>
+      <Auth />
+      <CoffeeForm />
+    </ApolloProvider>
   </SessionProvider>
 }
 
@@ -34,6 +54,10 @@ function CoffeeForm() {
   const [count, setCount] = useState(1)
   const { data: session } = useSession()
   const [ messages, setMessages ] = useState<string[]>([])
+  const creditQuery = useQuery(GET_CREDIT)
+  const [submitCoffee, coffeeMutation] = useMutation(COFFEE, {
+    refetchQueries: [GET_CREDIT]
+  })
 
   if (!session?.user) {
     return <></>
@@ -68,48 +92,23 @@ function CoffeeForm() {
             <option>10</option>
           </select>
         </div>
-      <button 
-        type="submit" 
-        className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-        onClick={submit}
-      >
-        submit!
-      </button>
-    </div>
+        <button 
+          type="submit" 
+          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          onClick={e => submitCoffee({ variables: { count } })}
+          disabled={coffeeMutation.loading}
+        >
+          submit!
+        </button>
+        <div>
+          <p>bilancio: { creditQuery.loading 
+              ? "..." : creditQuery.error ? `errore: ${creditQuery.error.message}`
+              : `€ ${(creditQuery.data.credit / 100).toFixed(2)}`
+            }</p>
+        </div>
+      </div>
     </form>
   </main>
-
-  async function submit(e: any) {
-    console.log("submitting", count)
-    e.preventDefault()
-    const query = `
-      mutation  PostMutation($count: Int!) {
-        coffee(count: $count)
-      }`
-
-    const variables = { count }
-    
-    const requestOptions = {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({query, variables})
-    }
-
-    const response = await fetch('/graphql', requestOptions)
-
-    if (!response.ok) {
-      throw new Error(`connection error: ${response.statusText}`)
-    }
-      
-    const data = await response.json()
-    console.log("response", data)
-
-    if (data?.errors?.length > 0) {
-      data.errors.forEach((error: {message:string}) => {
-        setMessages(messages => [...messages, error.message])
-      })
-    } 
-  }
 }
 
 function Messages({messages, setMessages}:{

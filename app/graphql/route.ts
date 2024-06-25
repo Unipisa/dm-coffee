@@ -19,21 +19,22 @@ type Context = {
 const resolvers = {
   Query: {
     hello: () => 'world',
-    /*
-    account: async (email: string, context: any) => {
+    credit: async(_: any, __: {}, context: Context) => {
+      if (!context.user) throw new Error("not logged in")
       const client = await clientPromise
-      console.log("query context:", context)
       try {
         await client.connect()
         const account = client.db("coffee").collection("account")
-        const result = await account.find({}).toArray()
-        return result
-      } catch(error) {
-        console.error("Error in history function:", error)
+        const result = await account.aggregate([
+          { $match: { email: context.user.email } },
+          { $group: { _id: null, creditCents: { $sum: "$amountCents" } } }
+        ]).toArray()
+        if (result.length === 0) return {error: "no account found", balance: 0}
+        return result[0].creditCents
       } finally {
         await client.close()
       }
-    } */ 
+    },
   },
   Mutation: {
     coffee: async(_: any, {count}: {count: number}, context: Context) => {
@@ -44,7 +45,7 @@ const resolvers = {
         await client.connect()
         const account = client.db("coffee").collection("account")
         const result = await account.insertOne({
-          amountCents: count * 20,
+          amountCents: -count * 20,
           description: "coffee",
           email: context.user.email,
           timestamp: new Date()
@@ -62,7 +63,7 @@ const resolvers = {
 const typeDefs = gql`
   type Query {
     hello: String
-#    account: [String]
+    credit: Int
   }
   type Mutation {
     coffee(count: Int!): String
