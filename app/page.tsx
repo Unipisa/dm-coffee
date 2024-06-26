@@ -2,8 +2,9 @@
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import './globals.css'; // Import global styles if you have them
-import { gql, useQuery, useMutation } from '@apollo/client';
+import { gql, useQuery, useMutation, useApolloClient } from '@apollo/client';
 
+import Button from './components/Button'
 import Provider from './components/provider'
 import Credit from './components/credit'
 import Loading from './components/loading'
@@ -40,6 +41,7 @@ function Dashboard() {
   return <main>
     <h1>dm-coffee</h1>
     <Admin />
+    <Pairing />
     <CoffeeForm />
     <Credit />
     <Balance />
@@ -79,14 +81,9 @@ function CoffeeForm() {
           <option>10</option>
         </select>
       </div>
-      <button 
-        type="submit" 
-        className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-        onClick={e => submitCoffee({ variables: { count } })}
-        disabled={coffeeMutation.loading}
-      >
+      <Button onClick={() => submitCoffee({ variables: { count } })}>
         submit!
-      </button>
+      </Button>
     </div>
   </form>
 }
@@ -95,9 +92,55 @@ function Admin() {
   const { loading, error, data } = useQuery(GET_PROFILE)
   if (loading) return <Loading /> 
   if (error) return <Error error={error} />
-  if (!data.profile.admin) return <>not admin</>
+  if (!data.profile.admin) return <></>
   return <div>
     Accedi alla <a href="admin">pagina di amministrazione</a>
   </div>
 }
 
+const REQUEST_PAIRING = gql`
+  mutation RequestPairing {
+    card_request_pairing
+  }`
+
+function Pairing({}) {
+  const { loading, error, data } = useQuery(GET_PROFILE)
+  if (loading) return <Loading /> 
+  if (error) return <Error error={error} />
+  if (!data.profile) return <></>
+  if (data.profile.code) {
+    return <div>Hai associato una tessera. <Button variant="alert">disaccoppia!</Button></div>
+  } else return <PairingRequest />
+}
+
+function PairingRequest({}) {
+  const [submitPairing, submitPairingMutation] = useMutation<number>(REQUEST_PAIRING)
+  const [countdown, setCountdown] = useState(0)
+  const client = useApolloClient()
+  if (countdown > 0) {
+    return <p>Passa la tessera sul lettore entro <b>{countdown}</b> secondi!</p>
+  }
+  return <>
+    <p>Non hai associato nessuna tessera.</p>
+    <p>Se hai una tessera e sei in sala caffé premi il pulsante {}
+    <Button onClick={requestPairing}>
+      associazione tessera
+    </Button> 
+    </p>
+  </>
+
+  async function requestPairing() {
+    const milliseconds = (await submitPairing()).data
+    if (milliseconds) {
+      setCountdown(Math.round(milliseconds/1000))
+      const id = setInterval(() => {
+        setCountdown(c => c - 1)
+        client.refetchQueries({ include: ["GetProfile"] })
+      }, 1000)
+      setTimeout(() => {
+        clearInterval(id),
+        setCountdown(0)
+      }, milliseconds)
+    }
+  }
+}

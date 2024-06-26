@@ -7,6 +7,7 @@ import { NextApiRequest, NextApiResponse } from 'next'
 import { ObjectId } from 'mongodb'
 
 import config from '../config'
+import { REACT_LOADABLE_MANIFEST } from 'next/dist/shared/lib/constants'
 
 type Context = {
   req: NextApiRequest
@@ -71,11 +72,32 @@ const typeDefs = gql`
   }
 
   type Mutation {
+    """
+    addebita $count caffé
+    richiede autenticazione
+    """
     coffee(count: Int!): Boolean
+
+    """
+    crea o modifica una transazione
+    richiede autenticazione admin
+    """
     transaction(_id: String, email: String, amountCents: Int, description: String): Boolean
+
+    """
+    addebita un caffé
+    richiede token di autenticazione
+    """
+    card(code: String!): String
+
+    """
+    request a card pairing
+    returns the time in milliseconds after which the card will be unpaired
+    requires authentication
+    """
+    card_request_pairing: Int
   }
 `
-
 const resolvers = {
   Query: {
 
@@ -154,6 +176,61 @@ const resolvers = {
   },
 
   Mutation: {
+    card_request_pairing: async(_: any, __: {}, context: Context) => {
+      if (!context.user) throw new Error("not logged in")
+      const db = (await databasePromise).db
+      const users = db.collection("users")
+      const MILLISECONDS = 1000*60
+      const timestamp = new Date(new Date().getTime() + MILLISECONDS)
+      await users.updateOne({ email: context.user.email },
+        { $set: { scan_request_limit_timestamp: timestamp } })
+      return MILLISECONDS
+    },
+
+    card: async(_: any, {code}: {code: string}, context: Context) => {
+      const authorization = context.req.headers['Authorization']
+      // check if authorization bearer token is valid
+      if (!authorization || Array.isArray(authorization) || !config.TOKENS.split(',').map(token => `Bearer ${token}`).includes(authorization)) {
+        throw new Error("not authorized")
+      }
+      const db = (await databasePromise).db
+      const users = db.collection("users")
+      const user = await users.findOne({ code })
+      if (user) {
+        const accounts = db.collection("accounts")
+        const COST = 20
+        await accounts.insertOne({
+          email: user.email,
+          amountCents: -COST,
+          description: "coffee",
+          timestamp: new Date()
+        })        
+        const result = await accounts.aggregate([
+          { $match: { email: user.email } },
+          { $group: { _id: null, creditCents: { $sum: "$amountCents" } } }
+        ]).toArray()
+        const credit = result.length > 0 ? result[0].creditCents : 0
+        return [`addebitati ${COST} centesimi`, `${user.email.split('@')[0]}: ${(credit/100).toFixed(2)}€`].join('\n')
+      } else {
+        const CARD_PAIRING_MILLISECONDS = 1000*60
+        // cerca utenti che hanno chiesto l'accoppiamento della tessera
+        const pairings = await db.collection("users").aggregate([
+          { $match: { scan_request_limit_timestamp: { $gt: new Date(new Date().getTime() - CARD_PAIRING_MILLISECONDS) } } }
+        ]).toArray()
+        if (pairings.length === 0) {
+          return ["tessera sconosciuta","apri coffee.dm.unipi.it"].join('\n') 
+        } else if (pairings.length === 1) {
+          await users.updateOne({ _id: pairings[0]._id }, 
+            { $set: { 
+              scan_request_limit_timestamp: null,
+              code
+            } })
+          return ["tessera accoppiata!","passa nuovamente per addebitare"].join('\n')
+        } else {
+          return ["più tessere in attesa","accoppiamento fallito"].join('\n')
+        }
+      }
+    },
 
     coffee: async(_: any, {count}: {count: number}, context: Context) => {
       if (!context.user) throw new Error("not logged in")
