@@ -1,9 +1,15 @@
 "use client"
 import { useState } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
-import { SessionProvider } from 'next-auth/react'
 import './globals.css'; // Import global styles if you have them
-import { ApolloClient, ApolloError, InMemoryCache, ApolloProvider, gql, useQuery, useMutation } from '@apollo/client';
+import { ApolloError, gql, useQuery, useMutation } from '@apollo/client';
+
+import Provider from './components/provider'
+import Credit from './components/credit'
+import Loading from './components/loading'
+import Error from './components/error'
+import Balance from './components/balance'
+import Transactions from './components/transactions'
 
 const GET_PROFILE = gql`
   query GetProfile {
@@ -13,61 +19,15 @@ const GET_PROFILE = gql`
     }
   }`
 
-const GET_CREDIT = gql`
-  query GetCredit {
-    credit
-  }`
-
-const GET_BALANCE = gql`
-  query GetBalance {
-    balance
-  }`
-
-const GET_TRANSACTIONS = gql`
-  query GetTransactions {
-    transactions {
-      timestamp
-      amountCents
-      description
-    }
-  }`
-
 const COFFEE = gql`
   mutation PostMutation($count: Int!) {
     coffee(count: $count)
   }`
 
-const apolloClient = new ApolloClient({
-  uri: '/graphql',
-  cache: new InMemoryCache()
-})
-
 export default function Home() {
-  return <SessionProvider>
-    <ApolloProvider client={apolloClient}>
-      <Auth />
+  return <Provider>
       <Dashboard />
-    </ApolloProvider>
-  </SessionProvider>
-}
-
-function Auth() {
-  const { data: session } = useSession()
-  if (session?.user) {
-    return <>
-      <p>signed in as {session.user.email}</p>
-      <button 
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" 
-        onClick={() => signOut()}>sign out</button>
-    </>
-  } else {
-    return <>
-      <button 
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" 
-        onClick={() => signIn()}
-      >accedi</button>
-    </>
-  }
+  </Provider>
 }
 
 function Dashboard() {
@@ -90,7 +50,7 @@ function Dashboard() {
 function CoffeeForm() {
   const [count, setCount] = useState(1)
   const [submitCoffee, coffeeMutation] = useMutation(COFFEE, {
-    refetchQueries: [GET_CREDIT, GET_TRANSACTIONS, GET_BALANCE]
+    refetchQueries: ["GetCredit", "GetTransactions", "GetBalance"]
   })
 
   return <form>
@@ -131,69 +91,13 @@ function CoffeeForm() {
   </form>
 }
 
-function Credit() {
-  const {loading, error, data} = useQuery(GET_CREDIT)
-  if (loading) return <Loading />
-  if (error) return <Error error={error}/>
-  return <div>
-    <p>Il tuo credito: € {(data.credit / 100).toFixed(2)}</p>
-  </div>
-}
-
-function Balance() {
-  const {loading, error, data} = useQuery(GET_BALANCE)
-  if (loading) return <Loading />
-  if (error) return <Error error={error}/>
-  return <div>
-    <p>Bilancio complessivo: € {(data.balance / 100).toFixed(2)}</p>
-  </div>
-}
-
-function Transactions() {
-  const {loading, error, data} = useQuery(GET_TRANSACTIONS)
-
-  if (loading) return <Loading />
-  if (error) return <Error error={error} />
-
-  return <table className="table-auto">
-      <tbody>{data.transactions.map((transaction: any, i: number) => 
-          <tr key={i}>
-            <td>{(new Date(transaction.timestamp)).toLocaleDateString('it')}</td>
-            <td>{(transaction.amountCents/100).toFixed(2)}</td> 
-            <td>{transaction.description}</td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-}
-
 function Admin() {
   const { loading, error, data } = useQuery(GET_PROFILE)
   if (loading) return <Loading /> 
   if (error) return <Error error={error} />
   if (!data.profile.admin) return <>not admin</>
   return <div>
-    [WIP: admin controls]
+    Accedi alla <a href="admin">pagina di amministrazione</a>
   </div>
 }
 
-function Loading() {
-  return "..."
-}
-
-function Error({error}:{
-  error: ApolloError
-}) {
-  return <div>
-    Error: {error.message}
-  </div>
-}
-
-function Messages({messages, setMessages}:{
-  messages: string[],
-  setMessages: (messages: string[]) => void
-}) {
-  return <>
-    {messages.map((message, i) => <p key={i}>{message}</p>)}
-  </>
-}

@@ -36,3 +36,8 @@ table td {
   border: 1px solid rgb(var(--foreground-rgb));
   padding: 0.5rem;
 }
+
+a {
+  color: blue;
+  text-decoration: none;
+}
