@@ -50,7 +50,7 @@ function Dashboard() {
 function CoffeeForm() {
   const [count, setCount] = useState(1)
   const [submitCoffee, coffeeMutation] = useMutation(COFFEE, {
-    refetchQueries: ["GetCredit", "GetTransactions", "GetBalance"]
+    refetchQueries: ["GetCredit", "GetMyTransactions", "GetBalance"]
   })
 
   return <form>

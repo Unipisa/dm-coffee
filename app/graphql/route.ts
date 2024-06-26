@@ -35,14 +35,25 @@ const typeDefs = gql`
 
   type Query {
     profile: Profile
+    
     """
     credit of the currently logged in user (debit if negative)
     """
     credit: Int
+    
     """
     total balance (all users) (debit if negative)
     """
     balance: Int
+    
+    """
+    transactions of the currently logged in user
+    """
+    myTransactions: [Transaction]
+
+    """
+    all transactions
+    """
     transactions: [Transaction]
   }
 
@@ -84,7 +95,7 @@ const resolvers = {
       return result[0].balanceCents
     },
 
-    transactions: async(_: any, __: {}, context: Context) => {
+    myTransactions: async(_: any, __: {}, context: Context) => {
       if (!context.user) throw new Error("not logged in")
       const db = (await databasePromise).db
       const account = db.collection("account")
@@ -93,7 +104,21 @@ const resolvers = {
         .sort({ timestamp: -1 })
         .toArray()
       return result
+    },
+
+    transactions: async(_: any, __: {}, context: Context) => {
+      if (!context.user) throw new Error("not logged in")
+      if (!config.ADMINS.split(',').includes(context.user.email)) throw new Error("not admin")
+
+      const db = (await databasePromise).db
+      const account = db.collection("account")
+      const result = await account
+        .find({})
+        .sort({ timestamp: -1 })
+        .toArray()
+      return result
     }
+
   },
 
   Mutation: {
