@@ -35,7 +35,14 @@ const typeDefs = gql`
 
   type Query {
     profile: Profile
+    """
+    credit of the currently logged in user (debit if negative)
+    """
     credit: Int
+    """
+    total balance (all users) (debit if negative)
+    """
+    balance: Int
     transactions: [Transaction]
   }
 
@@ -65,6 +72,16 @@ const resolvers = {
       ]).toArray()
       if (result.length === 0) return 0
       return result[0].creditCents
+    },
+
+    balance: async(_: any, __: {}, context: Context) => {
+      const db = (await databasePromise).db
+      const account = db.collection("account")
+      const result = await account.aggregate([
+        { $group: { _id: null, balanceCents: { $sum: "$amountCents" } } }
+      ]).toArray()
+      if (result.length === 0) return 0
+      return result[0].balanceCents
     },
 
     transactions: async(_: any, __: {}, context: Context) => {

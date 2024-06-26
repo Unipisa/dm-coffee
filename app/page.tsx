@@ -18,6 +18,11 @@ const GET_CREDIT = gql`
     credit
   }`
 
+const GET_BALANCE = gql`
+  query GetBalance {
+    balance
+  }`
+
 const GET_TRANSACTIONS = gql`
   query GetTransactions {
     transactions {
@@ -77,6 +82,7 @@ function Dashboard() {
     <Admin />
     <CoffeeForm />
     <Credit />
+    <Balance />
     <Transactions />
   </main>
 }
@@ -84,7 +90,7 @@ function Dashboard() {
 function CoffeeForm() {
   const [count, setCount] = useState(1)
   const [submitCoffee, coffeeMutation] = useMutation(COFFEE, {
-    refetchQueries: [GET_CREDIT, GET_TRANSACTIONS]
+    refetchQueries: [GET_CREDIT, GET_TRANSACTIONS, GET_BALANCE]
   })
 
   return <form>
@@ -130,9 +136,17 @@ function Credit() {
   if (loading) return <Loading />
   if (error) return <Error error={error}/>
   return <div>
-    <p>bilancio: € {(data.credit / 100).toFixed(2)}</p>
+    <p>Il tuo credito: € {(data.credit / 100).toFixed(2)}</p>
   </div>
+}
 
+function Balance() {
+  const {loading, error, data} = useQuery(GET_BALANCE)
+  if (loading) return <Loading />
+  if (error) return <Error error={error}/>
+  return <div>
+    <p>Bilancio complessivo: € {(data.balance / 100).toFixed(2)}</p>
+  </div>
 }
 
 function Transactions() {
