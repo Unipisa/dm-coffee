@@ -140,7 +140,7 @@ function Users() {
             {data.users.map((user: any, i: number) => 
                 <tr key={i}>
                     <td>{user.email}</td>
-                    <td>{(user.creditCents/100).toFixed(2)}</td>
+                    <td>{(user.creditCents/100).toFixed(2)}€</td>
                     <td>{(new Date(user.timestamp)).toLocaleDateString('it')}</td>
                 </tr>
             )}

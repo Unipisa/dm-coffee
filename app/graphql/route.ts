@@ -138,22 +138,14 @@ const resolvers = {
       if (!config.ADMINS.split(',').includes(context.user.email)) throw new Error("not admin")
 
       const db = (await databasePromise).db
-      const result = await db.collection("users").aggregate([
-        { $lookup: { 
-          from: "account", 
-          localField: "email", 
-          foreignField: "email", 
-          as: "credit",
-          pipeline: [
-            { $group: { 
-              _id: "$email", 
-              creditCents: { $sum: "$amountCents" },
-              timestamp: { $max: "$timestamp" },
-            } },
-          ]
-         } },
-        { $unwind: "$credit" },
-        { $project: { _id: 0, email: 1, creditCents: "$credit.creditCents", timestamp: "$credit.timestamp" } }
+      const result = await db.collection("account").aggregate([
+        { $group: { 
+          _id: "$email", 
+          creditCents: { $sum: "$amountCents" },
+          timestamp: { $max: "$timestamp" },
+        }},
+        { $project: { _id: 0, email: "$_id", creditCents: 1, timestamp: 1 } },
+        { $sort: { email: 1 } }
       ]).toArray()
       console.log("users:", result)
       return result
