@@ -9,7 +9,9 @@ const GET_BALANCE = gql`
   }`
 
 export default function Balance() {
-    const {loading, error, data} = useQuery(GET_BALANCE)
+    const {loading, error, data} = useQuery(GET_BALANCE, {
+      pollInterval: 5000
+    })
     if (loading) return <Loading />
     if (error) return <Error error={error}/>
     return <div>

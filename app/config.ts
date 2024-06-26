@@ -6,7 +6,7 @@ let singleton
 const config = singleton || (() => {
     const config = {
         ADMINS: process.env.ADMINS || '', // comma separated list of emails
-        TOKENS: process.env.TOKENS || '', // comma separated list of tokens for the card reader
+        SECRET_TOKENS: process.env.SECRET_TOKENS || '', // comma separated list of tokens for the card reader
         GOOGLE_AUTH_CLIENT_ID: process.env.GOOGLE_AUTH_CLIENT_ID || '',
         GOOGLE_AUTH_CLIENT_SECRET: process.env.GOOGLE_AUTH_CLIENT_SECRET || '',
         DATABASE_NAME,

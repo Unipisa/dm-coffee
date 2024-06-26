@@ -9,7 +9,7 @@ const GET_CREDIT = gql`
   }`
 
 export default function Credit() {
-    const {loading, error, data} = useQuery(GET_CREDIT)
+    const {loading, error, data} = useQuery(GET_CREDIT, {pollInterval:5000})
     if (loading) return <Loading />
     if (error) return <Error error={error}/>
     return <div>

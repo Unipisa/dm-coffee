@@ -17,6 +17,7 @@ const GET_PROFILE = gql`
     profile {
       email
       admin
+      code
     }
   }`
 
@@ -103,44 +104,52 @@ const REQUEST_PAIRING = gql`
     card_request_pairing
   }`
 
+const REMOVE_PAIRING = gql`
+  mutation RemovePairing {
+    card_remove_pairing
+  }`
+
 function Pairing({}) {
   const { loading, error, data } = useQuery(GET_PROFILE)
+  const [ removePairing, {}] = useMutation(REMOVE_PAIRING, {refetchQueries: ["GetProfile"]}) 
   if (loading) return <Loading /> 
   if (error) return <Error error={error} />
   if (!data.profile) return <></>
   if (data.profile.code) {
-    return <div>Hai associato una tessera. <Button variant="alert">disaccoppia!</Button></div>
+    return <div>Hai associato la tessera {data.profile.code}. <Button variant="alert" onClick={removePairing}>disaccoppia!</Button></div>
   } else return <PairingRequest />
 }
 
 function PairingRequest({}) {
-  const [submitPairing, submitPairingMutation] = useMutation<number>(REQUEST_PAIRING)
+  const [submitPairing, {loading, error, data}] = useMutation(REQUEST_PAIRING,{
+    onCompleted: completed})
   const [countdown, setCountdown] = useState(0)
   const client = useApolloClient()
+  if (loading) return <Loading />
+  if (error) return <Error error={error} />
   if (countdown > 0) {
     return <p>Passa la tessera sul lettore entro <b>{countdown}</b> secondi!</p>
   }
   return <>
     <p>Non hai associato nessuna tessera.</p>
     <p>Se hai una tessera e sei in sala caffé premi il pulsante {}
-    <Button onClick={requestPairing}>
+    <Button onClick={() => submitPairing()}>
       associazione tessera
     </Button> 
     </p>
   </>
 
-  async function requestPairing() {
-    const milliseconds = (await submitPairing()).data
-    if (milliseconds) {
-      setCountdown(Math.round(milliseconds/1000))
-      const id = setInterval(() => {
-        setCountdown(c => c - 1)
-        client.refetchQueries({ include: ["GetProfile"] })
-      }, 1000)
-      setTimeout(() => {
-        clearInterval(id),
-        setCountdown(0)
-      }, milliseconds)
-    }
+  function completed(data: {card_request_pairing: number}) {
+    const milliseconds = data.card_request_pairing
+    console.log(`milliseconds: ${milliseconds}`)
+    setCountdown(Math.round(milliseconds/1000))
+    const id = setInterval(() => {
+      setCountdown(c => c - 1)
+      client.refetchQueries({ include: ["GetProfile"] })
+    }, 1000)
+    setTimeout(() => {
+      clearInterval(id),
+      setCountdown(0)
+    }, milliseconds)
   }
 }

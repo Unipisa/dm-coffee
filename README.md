@@ -24,6 +24,16 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
+## emulating the card reader
+
+per simulare il passaggio della tessera `1234` bisogna mettere un token 
+segreto nella variabile d'ambiente SECRET_TOKENS (si possono inserire più tokens separati da una virgola) e poi si può dare il comando
+```bash
+CODE=codice_tessera
+SECRET_TOKEN=codice_segreto
+curl 'http://localhost:3000/graphql' -H "Authorization: ${SECRET_TOKENS}" -H 'content-type: application/json' --data-raw '{"operationName":"Card","variables":{"code":"'"${CODE}"'"},"query":"mutation Card($code: String!) {\n  card(code: $code)\n}"}'
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

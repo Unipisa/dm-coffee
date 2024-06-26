@@ -4,6 +4,7 @@ import { SessionProvider } from 'next-auth/react'
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 
 import '../globals.css'; // Import global styles if you have them
+import Button from './Button'
 
 const apolloClient = new ApolloClient({
     uri: '/graphql',
@@ -24,18 +25,16 @@ export default function Provider({children}:{
 function Auth() {
     const { data: session } = useSession()
     if (session?.user) {
-        return <>
-        <p>signed in as {session.user.email}</p>
-        <button 
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" 
-            onClick={() => signOut()}>sign out</button>
-        </>
+        return <p>{session.user.email} {}
+            <Button onClick={() => signOut()}>
+                esci
+            </Button>
+        </p>
     } else {
         return <>
-        <button 
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" 
-            onClick={() => signIn()}
-        >accedi</button>
+            <Button onClick={() => signIn()}>
+                accedi
+            </Button>
         </>
     }
 }

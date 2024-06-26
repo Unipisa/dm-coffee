@@ -4,14 +4,14 @@ import { gql } from 'graphql-tag'
 import { getToken } from "next-auth/jwt"
 import databasePromise from "../db"
 import { NextApiRequest, NextApiResponse } from 'next'
+import type { NextRequest } from "next/server"
 import { ObjectId } from 'mongodb'
 
 import config from '../config'
-import { REACT_LOADABLE_MANIFEST } from 'next/dist/shared/lib/constants'
 
 type Context = {
-  req: NextApiRequest
-  res: NextApiResponse
+  req: NextRequest
+  res: Response|undefined
   user?: {
     email: string
     name: string
@@ -26,6 +26,7 @@ const typeDefs = gql`
   type Profile {
     email: String
     admin: Boolean
+    code: String
   }
 
   type Transaction {
@@ -33,6 +34,7 @@ const typeDefs = gql`
     amountCents: Int
     description: String
     email: String
+    code: String
     timestamp: Timestamp
   }
 
@@ -96,6 +98,11 @@ const typeDefs = gql`
     requires authentication
     """
     card_request_pairing: Int
+
+    """
+    remove card pairing
+    """
+    card_remove_pairing: Boolean
   }
 `
 const resolvers = {
@@ -103,10 +110,9 @@ const resolvers = {
 
     profile: async(_: any, __: {}, context: Context) => {
       if (!context.user) return 
-      return {
-        email: context.user.email,
-        admin: config.ADMINS.split(',').includes(context.user.email)
-      }
+      const users = (await databasePromise).db.collection('users')
+      const user = await users.findOne({email: context.user.email})
+      return user
     },
 
     credit: async(_: any, __: {}, context: Context) => {
@@ -187,25 +193,35 @@ const resolvers = {
       return MILLISECONDS
     },
 
+    card_remove_pairing: async(_: any, __: {}, context: Context) => {
+      if (!context.user) throw new Error("not logged in")
+      const users = (await databasePromise).db.collection("users")
+      await users.updateOne({email: context.user.email},
+        { $set: { code: null }})
+      return true 
+    },
+
     card: async(_: any, {code}: {code: string}, context: Context) => {
-      const authorization = context.req.headers['Authorization']
+      const authorization = context.req.headers.get('authorization')
+
       // check if authorization bearer token is valid
-      if (!authorization || Array.isArray(authorization) || !config.TOKENS.split(',').map(token => `Bearer ${token}`).includes(authorization)) {
+      if (!authorization || Array.isArray(authorization) || !config.SECRET_TOKENS.split(',').includes(authorization)) {
         throw new Error("not authorized")
       }
       const db = (await databasePromise).db
       const users = db.collection("users")
       const user = await users.findOne({ code })
       if (user) {
-        const accounts = db.collection("accounts")
+        const transactions = db.collection("account")
         const COST = 20
-        await accounts.insertOne({
+        await transactions.insertOne({
           email: user.email,
           amountCents: -COST,
-          description: "coffee",
+          description: `coffee`,
+          code: code,
           timestamp: new Date()
         })        
-        const result = await accounts.aggregate([
+        const result = await transactions.aggregate([
           { $match: { email: user.email } },
           { $group: { _id: null, creditCents: { $sum: "$amountCents" } } }
         ]).toArray()
@@ -284,10 +300,10 @@ const server = new ApolloServer<Context>({
   typeDefs,
 })
 
-const handler = startServerAndCreateNextHandler<NextApiRequest,Context>(server, {
-    context: async (req, res) => { 
+const handler = startServerAndCreateNextHandler<NextRequest,Context>(server, {
+    context: async (req, res): Promise<Context> => { 
+      const ctx: Context = { req, res }
       const token = await getToken({ req })
-      let ctx: Context = { req, res }
       if (!token || !token.email) return ctx // not logged in
       return { 
         ...ctx,
