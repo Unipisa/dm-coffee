@@ -2,8 +2,10 @@ import { ApolloServer } from '@apollo/server'
 import { startServerAndCreateNextHandler } from '@as-integrations/next'
 import { gql } from 'graphql-tag'
 import { getToken } from "next-auth/jwt"
-import clientPromise from "../db"
+import databasePromise from "../db"
 import { NextApiRequest, NextApiResponse } from 'next'
+
+import config from '../config'
 
 type Context = {
   req: NextApiRequest
@@ -16,14 +18,47 @@ type Context = {
   }
 }
 
+const typeDefs = gql`
+  scalar Timestamp
+
+  type Profile {
+    email: String
+    admin: Boolean
+  }
+
+  type Transaction {
+    amountCents: Int
+    description: String
+    email: String
+    timestamp: Timestamp
+  }
+
+  type Query {
+    profile: Profile
+    credit: Int
+    transactions: [Transaction]
+  }
+
+  type Mutation {
+    coffee(count: Int!): Boolean
+  }
+`
+
 const resolvers = {
   Query: {
-    hello: () => 'world',
+
+    profile: async(_: any, __: {}, context: Context) => {
+      if (!context.user) return 
+      return {
+        email: context.user.email,
+        admin: config.ADMINS.split(',').includes(context.user.email)
+      }
+    },
 
     credit: async(_: any, __: {}, context: Context) => {
       if (!context.user) throw new Error("not logged in")
-      const client = await clientPromise
-      const account = client.db("coffee").collection("account")
+      const db = (await databasePromise).db
+      const account = db.collection("account")
       const result = await account.aggregate([
         { $match: { email: context.user.email } },
         { $group: { _id: null, creditCents: { $sum: "$amountCents" } } }
@@ -34,27 +69,33 @@ const resolvers = {
 
     transactions: async(_: any, __: {}, context: Context) => {
       if (!context.user) throw new Error("not logged in")
-      const client = await clientPromise
-      const account = client.db("coffee").collection("account")
-      const result = await account.find({ email: context.user.email }).toArray()
+      const db = (await databasePromise).db
+      const account = db.collection("account")
+      const result = await account
+        .find({ email: context.user.email })
+        .sort({ timestamp: -1 })
+        .toArray()
       return result
     }
   },
+
   Mutation: {
+
     coffee: async(_: any, {count}: {count: number}, context: Context) => {
       if (!context.user) throw new Error("not logged in")
-      const client = await clientPromise
+      const db = (await databasePromise).db
       console.log("mutation context:", context)
-      const account = client.db("coffee").collection("account")
+      const account = db.collection("account")
       const result = await account.insertOne({
         amountCents: -count * 20,
         description: "coffee",
         email: context.user.email,
         timestamp: new Date()
       })
-      return "ok!"
+      return true
     }
   },
+
   Timestamp: {
     parseValue(value: number) {
       return new Date(value)
@@ -71,30 +112,10 @@ const resolvers = {
   }
 }
 
-const typeDefs = gql`
-  scalar Timestamp
-
-  type Transaction {
-    amountCents: Int
-    description: String
-    email: String
-    timestamp: Timestamp
-  }
-
-  type Query {
-    hello: String
-    credit: Int
-    transactions: [Transaction]
-  }
-  type Mutation {
-    coffee(count: Int!): String
-  }
-`;
-
 const server = new ApolloServer<Context>({
   resolvers,
   typeDefs,
-});
+})
 
 const handler = startServerAndCreateNextHandler<NextApiRequest,Context>(server, {
     context: async (req, res) => { 

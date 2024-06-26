@@ -2,8 +2,13 @@ import NextAuth, {AuthOptions} from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter"
 
-import clientPromise from "../../../db"
+import databasePromise from "../../../db"
 import config from "../../../config"
+
+async function getClient() {
+  const { client } = await databasePromise
+  return client
+}
 
 const { 
   GOOGLE_AUTH_CLIENT_ID, 
@@ -29,7 +34,7 @@ const authOptions: AuthOptions = {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  adapter: MongoDBAdapter(clientPromise, {
+  adapter: MongoDBAdapter(getClient(), {
     databaseName: DATABASE_NAME,
   })
 }
