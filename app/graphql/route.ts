@@ -4,6 +4,7 @@ import { gql } from 'graphql-tag'
 import { getToken } from "next-auth/jwt"
 import databasePromise from "../db"
 import { NextApiRequest, NextApiResponse } from 'next'
+import { ObjectId } from 'mongodb'
 
 import config from '../config'
 
@@ -27,9 +28,16 @@ const typeDefs = gql`
   }
 
   type Transaction {
+    _id: String
     amountCents: Int
     description: String
     email: String
+    timestamp: Timestamp
+  }
+
+  type User {
+    email: String
+    creditCents: Int
     timestamp: Timestamp
   }
 
@@ -55,10 +63,16 @@ const typeDefs = gql`
     all transactions
     """
     transactions: [Transaction]
+
+    """
+    users and their credit
+    """
+    users: [User]
   }
 
   type Mutation {
     coffee(count: Int!): Boolean
+    transaction(_id: String, email: String, amountCents: Int, description: String): Boolean
   }
 `
 
@@ -117,6 +131,32 @@ const resolvers = {
         .sort({ timestamp: -1 })
         .toArray()
       return result
+    },
+
+    users: async(_: any, __: {}, context: Context) => {
+      if (!context.user) throw new Error("not logged in")
+      if (!config.ADMINS.split(',').includes(context.user.email)) throw new Error("not admin")
+
+      const db = (await databasePromise).db
+      const result = await db.collection("users").aggregate([
+        { $lookup: { 
+          from: "account", 
+          localField: "email", 
+          foreignField: "email", 
+          as: "credit",
+          pipeline: [
+            { $group: { 
+              _id: "$email", 
+              creditCents: { $sum: "$amountCents" },
+              timestamp: { $max: "$timestamp" },
+            } },
+          ]
+         } },
+        { $unwind: "$credit" },
+        { $project: { _id: 0, email: 1, creditCents: "$credit.creditCents", timestamp: "$credit.timestamp" } }
+      ]).toArray()
+      console.log("users:", result)
+      return result
     }
 
   },
@@ -135,7 +175,23 @@ const resolvers = {
         timestamp: new Date()
       })
       return true
+    },
+
+    transaction: async(_: any, { _id, email, amountCents, description }: { _id: string, email: string, amountCents: number, description: string }, context: Context) => {
+      if (!context.user) throw new Error("not logged in")
+      if (!config.ADMINS.split(',').includes(context.user.email)) throw new Error("not admin")
+
+      const db = (await databasePromise).db
+      const account = db.collection("account")
+      if (_id) {
+        await account.updateOne({ _id: new ObjectId(_id) }, 
+          { $set: { email, amountCents, description } })
+      } else {
+        await account.insertOne({ email, amountCents, description, timestamp: new Date() })
+      }
+      return true
     }
+
   },
 
   Timestamp: {

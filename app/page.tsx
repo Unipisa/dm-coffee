@@ -1,8 +1,8 @@
 "use client"
 import { useState } from 'react'
-import { useSession, signIn, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import './globals.css'; // Import global styles if you have them
-import { ApolloError, gql, useQuery, useMutation } from '@apollo/client';
+import { gql, useQuery, useMutation } from '@apollo/client';
 
 import Provider from './components/provider'
 import Credit from './components/credit'
