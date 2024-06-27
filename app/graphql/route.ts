@@ -112,7 +112,11 @@ const resolvers = {
       if (!context.user) return 
       const users = (await databasePromise).db.collection('users')
       const user = await users.findOne({email: context.user.email})
-      return user
+      if (config.ADMINS.split(',').includes(context.user.email)) {
+        return { ...user, admin: true}
+      } else {
+        return {...user}
+      }
     },
 
     credit: async(_: any, __: {}, context: Context) => {
