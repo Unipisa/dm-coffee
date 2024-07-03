@@ -27,12 +27,26 @@ This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-opti
 ## emulating the card reader
 
 per simulare il passaggio della tessera `1234` bisogna mettere un token 
-segreto nella variabile d'ambiente SECRET_TOKENS (si possono inserire più tokens separati da una virgola) e poi si può dare il comando
+segreto nella variabile d'ambiente `CARD_SECRET_TOKENS` (si possono inserire più tokens separati da una virgola) e poi si può dare il comando
 ```bash
 CODE=codice_tessera
-SECRET_TOKEN=codice_segreto
+CARD_SECRET_TOKEN=codice_segreto
 curl 'http://localhost:3000/graphql' -H "Authorization: ${SECRET_TOKENS}" -H 'content-type: application/json' --data-raw '{"operationName":"Card","variables":{"code":"'"${CODE}"'"},"query":"mutation Card($code: String!) {\n  card(code: $code)\n}"}'
 ```
+
+## inserting a transaction with an API call
+
+Per automatizzare l'inserimento delle transazioni da altre fonti (ad esempio dai pagamenti di paypal) si può fare una chiamataa alle API 
+utilizzando un `token` invece che username e password di amministratore.
+Il token (un codice segreto) va inserito nella variabile d'ambiente ADMIN_SECRET_TOKENS (più token possono essere separati da virgola) e quindi si può fare una chiamata come segue:
+```bash
+ADMIN_SECRET_TOKEN=codice_segreto
+email=pippo@email.com
+amountCents=100 # centesimi
+description="pagamento paypal"
+curl "http://localhost:3000/graphql" -H "Authorization: ${ADMIN_SECRET_TOKEN}" -H "content-type: application/json" --data-raw '{"operationName":"SaveTransaction","variables":{"email":"'"${email}"'","amountCents":'"${amountCents}"',"description":"'"${description}"'"},"query":"mutation SaveTransaction($email: String, $amountCents: Int, $description: String) { transaction(email: $email\n amountCents:$amountCents\n  description: $description) }"}'
+```
+
 
 ## Learn More
 

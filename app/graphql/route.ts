@@ -209,7 +209,7 @@ const resolvers = {
       const authorization = context.req.headers.get('authorization')
 
       // check if authorization bearer token is valid
-      if (!authorization || Array.isArray(authorization) || !config.SECRET_TOKENS.split(',').includes(authorization)) {
+      if (!authorization || Array.isArray(authorization) || !config.CARD_SECRET_TOKENS.split(',').includes(authorization)) {
         throw new Error("not authorized")
       }
       const db = (await databasePromise).db
@@ -267,8 +267,15 @@ const resolvers = {
     },
 
     transaction: async(_: any, { _id, email, amountCents, description }: { _id: string, email: string, amountCents: number, description: string }, context: Context) => {
-      if (!context.user) throw new Error("not logged in")
-      if (!config.ADMINS.split(',').includes(context.user.email)) throw new Error("not admin")
+      // check if authorization bearer token is valid
+      const authorization = context.req.headers.get('authorization')
+
+      if (!authorization || Array.isArray(authorization) || !config.ADMIN_SECRET_TOKENS.split(',').includes(authorization)) {
+        console.log("invalid authorization", authorization)
+        // no token provided, check credentials
+        if (!context.user) throw new Error("not logged in")
+        if (!config.ADMINS.split(',').includes(context.user.email)) throw new Error("not admin")
+      }
 
       const db = (await databasePromise).db
       const account = db.collection("account")
