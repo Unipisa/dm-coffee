@@ -1,29 +1,23 @@
 "use client"
 import { useState } from 'react'
-import { useSession, signIn, signOut } from 'next-auth/react'
-import { SessionProvider } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import './globals.css'; // Import global styles if you have them
-import { ApolloClient, ApolloError, InMemoryCache, ApolloProvider, gql, useQuery, useMutation } from '@apollo/client';
+import { gql, useQuery, useMutation, useApolloClient } from '@apollo/client';
+
+import Button from './components/Button'
+import Provider from './components/provider'
+import Credit from './components/credit'
+import Loading from './components/loading'
+import Error from './components/error'
+import Balance from './components/balance'
+import Transactions from './components/transactions'
 
 const GET_PROFILE = gql`
   query GetProfile {
     profile {
       email
       admin
-    }
-  }`
-
-const GET_CREDIT = gql`
-  query GetCredit {
-    credit
-  }`
-
-const GET_TRANSACTIONS = gql`
-  query GetTransactions {
-    transactions {
-      timestamp
-      amountCents
-      description
+      code
     }
   }`
 
@@ -32,37 +26,10 @@ const COFFEE = gql`
     coffee(count: $count)
   }`
 
-const apolloClient = new ApolloClient({
-  uri: '/graphql',
-  cache: new InMemoryCache()
-})
-
 export default function Home() {
-  return <SessionProvider>
-    <ApolloProvider client={apolloClient}>
-      <Auth />
+  return <Provider>
       <Dashboard />
-    </ApolloProvider>
-  </SessionProvider>
-}
-
-function Auth() {
-  const { data: session } = useSession()
-  if (session?.user) {
-    return <>
-      <p>signed in as {session.user.email}</p>
-      <button 
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" 
-        onClick={() => signOut()}>sign out</button>
-    </>
-  } else {
-    return <>
-      <button 
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" 
-        onClick={() => signIn()}
-      >accedi</button>
-    </>
-  }
+  </Provider>
 }
 
 function Dashboard() {
@@ -75,8 +42,10 @@ function Dashboard() {
   return <main>
     <h1>dm-coffee</h1>
     <Admin />
+    <Pairing />
     <CoffeeForm />
     <Credit />
+    <Balance />
     <Transactions />
   </main>
 }
@@ -84,7 +53,7 @@ function Dashboard() {
 function CoffeeForm() {
   const [count, setCount] = useState(1)
   const [submitCoffee, coffeeMutation] = useMutation(COFFEE, {
-    refetchQueries: [GET_CREDIT, GET_TRANSACTIONS]
+    refetchQueries: ["GetCredit", "GetMyTransactions", "GetBalance"]
   })
 
   return <form>
@@ -113,73 +82,74 @@ function CoffeeForm() {
           <option>10</option>
         </select>
       </div>
-      <button 
-        type="submit" 
-        className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-        onClick={e => submitCoffee({ variables: { count } })}
-        disabled={coffeeMutation.loading}
-      >
+      <Button onClick={() => submitCoffee({ variables: { count } })}>
         submit!
-      </button>
+      </Button>
     </div>
   </form>
-}
-
-function Credit() {
-  const {loading, error, data} = useQuery(GET_CREDIT)
-  if (loading) return <Loading />
-  if (error) return <Error error={error}/>
-  return <div>
-    <p>bilancio: € {(data.credit / 100).toFixed(2)}</p>
-  </div>
-
-}
-
-function Transactions() {
-  const {loading, error, data} = useQuery(GET_TRANSACTIONS)
-
-  if (loading) return <Loading />
-  if (error) return <Error error={error} />
-
-  return <table className="table-auto">
-      <tbody>{data.transactions.map((transaction: any, i: number) => 
-          <tr key={i}>
-            <td>{(new Date(transaction.timestamp)).toLocaleDateString('it')}</td>
-            <td>{(transaction.amountCents/100).toFixed(2)}</td> 
-            <td>{transaction.description}</td>
-          </tr>
-        )}
-      </tbody>
-    </table>
 }
 
 function Admin() {
   const { loading, error, data } = useQuery(GET_PROFILE)
   if (loading) return <Loading /> 
   if (error) return <Error error={error} />
-  if (!data.profile.admin) return <>not admin</>
+  if (!data.profile.admin) return <></>
   return <div>
-    [WIP: admin controls]
+    Accedi alla <a href="admin">pagina di amministrazione</a>
   </div>
 }
 
-function Loading() {
-  return "..."
+const REQUEST_PAIRING = gql`
+  mutation RequestPairing {
+    card_request_pairing
+  }`
+
+const REMOVE_PAIRING = gql`
+  mutation RemovePairing {
+    card_remove_pairing
+  }`
+
+function Pairing({}) {
+  const { loading, error, data } = useQuery(GET_PROFILE)
+  const [ removePairing, {}] = useMutation(REMOVE_PAIRING, {refetchQueries: ["GetProfile"]}) 
+  if (loading) return <Loading /> 
+  if (error) return <Error error={error} />
+  if (!data.profile) return <></>
+  if (data.profile.code) {
+    return <div>Hai associato la tessera {data.profile.code}. <Button variant="alert" onClick={removePairing}>disaccoppia!</Button></div>
+  } else return <PairingRequest />
 }
 
-function Error({error}:{
-  error: ApolloError
-}) {
-  return <div>
-    Error: {error.message}
-  </div>
-}
-
-function Messages({messages, setMessages}:{
-  messages: string[],
-  setMessages: (messages: string[]) => void
-}) {
+function PairingRequest({}) {
+  const [submitPairing, {loading, error, data}] = useMutation(REQUEST_PAIRING,{
+    onCompleted: completed})
+  const [countdown, setCountdown] = useState(0)
+  const client = useApolloClient()
+  if (loading) return <Loading />
+  if (error) return <Error error={error} />
+  if (countdown > 0) {
+    return <p>Passa la tessera sul lettore entro <b>{countdown}</b> secondi!</p>
+  }
   return <>
-    {messages.map((message, i) => <p key={i}>{message}</p>)}
+    <p>Non hai associato nessuna tessera.</p>
+    <p>Se hai una tessera e sei in sala caffé premi il pulsante {}
+    <Button onClick={() => submitPairing()}>
+      associazione tessera
+    </Button> 
+    </p>
   </>
+
+  function completed(data: {card_request_pairing: number}) {
+    const milliseconds = data.card_request_pairing
+    console.log(`milliseconds: ${milliseconds}`)
+    setCountdown(Math.round(milliseconds/1000))
+    const id = setInterval(() => {
+      setCountdown(c => c - 1)
+      client.refetchQueries({ include: ["GetProfile"] })
+    }, 1000)
+    setTimeout(() => {
+      clearInterval(id),
+      setCountdown(0)
+    }, milliseconds)
+  }
 }
