@@ -11,18 +11,21 @@ export default function Admin({}) {
     return <Provider>
         <h1>dm-coffee admin</h1>
         Torna alla <a href='/'>pagina principale</a>
-        <Balance />       
+        <br />
+        Vai alla <a href='/admin/import'>pagina di importazione</a>
+        <Balance />
         <Transactions />
         <Users />
     </Provider>
 }
 
-const GET_TRANSACTIONS = gql`
+export const GET_TRANSACTIONS = gql`
   query GetTransactions {
     transactions {
       _id 
       timestamp
       email
+      count
       amountCents
       description
     }
@@ -32,6 +35,7 @@ type Transaction = {
   _id: string,
   timestamp: string,
   email: string,
+  count: number,
   amountCents: number,
   description: string
 }
@@ -50,24 +54,26 @@ function Transactions() {
     </table>
 }
 
-const SAVE_TRANSACTION = gql`
-  mutation SaveTransaction($_id: String, $email: String, $amountCents: Int, $description: String) {
-    transaction(_id: $_id, email: $email, amountCents: $amountCents, description: $description)
+export const SAVE_TRANSACTION = gql`
+  mutation SaveTransaction($_id: String, $email: String, $count: Int, $amountCents: Int, $description: String) {
+    transaction(_id: $_id, email: $email, count: $count, amountCents: $amountCents, description: $description)
   }`
 
 function TransactionRow({transaction}:{
   transaction?: Transaction
 }) {
   const originalEmail = transaction?.email || ''
+  const originalCount = transaction?.count || 0
   const originalAmount = transaction?.amountCents || 0
   const originalDescription = transaction?.description || ''
   const timestamp = transaction?.timestamp || new Date().toISOString()
 
   const [newEmail, setEmail] = useState(originalEmail)
+  const [newCount, setCount] = useState(originalCount)
   const [newAmount, setAmount] = useState(originalAmount)
   const [newDescription, setDescription] = useState(originalDescription)
   const [editing, setEditing] = useState(false)
-  const modified = (newEmail !== originalEmail) || (newAmount !== originalAmount) || (newDescription !== originalDescription)
+  const modified = (newEmail !== originalEmail) || (newCount !== originalCount) || (newAmount !== originalAmount) || (newDescription !== originalDescription)
   const [submitTransaction, transactionMutation] = useMutation(SAVE_TRANSACTION, {
     refetchQueries: ["GetTransactions"]})
 
@@ -75,6 +81,9 @@ function TransactionRow({transaction}:{
     <td>{transaction?(new Date(timestamp)).toLocaleDateString('it'):''}</td>
     <td>{transaction && !editing ? originalEmail
       :<input type="email" placeholder="email" value={newEmail} onChange={e => setEmail(e.target.value)} />}
+    </td>
+    <td>{transaction && !editing ? originalCount
+      :<input type="number" placeholder="count" value={newCount || ''} onChange={e => setCount(parseInt(e.target.value) || 0)} />}
     </td>
     <td>{transaction && !editing ?(`${(originalAmount/100).toFixed(2)}€`)
       :<input type="number" placeholder="cents" value={newAmount || ''} onChange={e => setAmount(parseInt(e.target.value))} />}
@@ -103,18 +112,22 @@ function TransactionRow({transaction}:{
 
   function cancel() {
     setEmail(originalEmail)
+    setCount(0)
     setAmount(originalAmount)
     setDescription(originalDescription)
     setEditing(false)
   }
 
   async function save() {
-    await submitTransaction({ variables: {
+    const variables = {
       _id: transaction?._id,
       email: newEmail,
+      count: newCount,
       amountCents: newAmount,
       description: newDescription
-    }})
+    }
+    console.log(`SAVE ${JSON.stringify(variables)}`)
+    await submitTransaction({ variables })
     setEditing(false)
     if (!transaction) cancel()
   }

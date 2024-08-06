@@ -31,6 +31,7 @@ const typeDefs = gql`
 
   type Transaction {
     _id: String
+    count: Int
     amountCents: Int
     description: String
     email: String
@@ -84,7 +85,7 @@ const typeDefs = gql`
     crea o modifica una transazione
     richiede autenticazione admin
     """
-    transaction(_id: String, email: String, amountCents: Int, description: String): Boolean
+    transaction(_id: String, email: String, count: Int, amountCents: Int, description: String): Boolean
 
     """
     addebita un caffé
@@ -259,6 +260,7 @@ const resolvers = {
       const account = db.collection("account")
       const result = await account.insertOne({
         amountCents: -count * 20,
+        count,
         description: "coffee",
         email: context.user.email,
         timestamp: new Date()
@@ -266,7 +268,7 @@ const resolvers = {
       return true
     },
 
-    transaction: async(_: any, { _id, email, amountCents, description }: { _id: string, email: string, amountCents: number, description: string }, context: Context) => {
+    transaction: async(_: any, { _id, email, count, amountCents, description }: { _id: string, email: string, count: number, amountCents: number, description: string }, context: Context) => {
       // check if authorization bearer token is valid
       const authorization = context.req.headers.get('authorization')
 
@@ -277,13 +279,15 @@ const resolvers = {
         if (!config.ADMINS.split(',').includes(context.user.email)) throw new Error("not admin")
       }
 
+      console.log(`making transaction: ${{_id, email, count, amountCents, description}}`)
+
       const db = (await databasePromise).db
       const account = db.collection("account")
       if (_id) {
         await account.updateOne({ _id: new ObjectId(_id) }, 
-          { $set: { email, amountCents, description } })
+          { $set: { email, count, amountCents, description } })
       } else {
-        await account.insertOne({ email, amountCents, description, timestamp: new Date() })
+        await account.insertOne({ email, count, amountCents, description, timestamp: new Date() })
       }
       return true
     }
