@@ -83,7 +83,7 @@ function ImportWidget() {
     }
 
     function parseRow(row: RowType) {
-        const [date, time, count, email] = row
+        const [date, time, count_string, email] = row
         const [day,month,year] = date.split('/').map(x => parseInt(x))
         if (year<2000 || year > 3000 || day<1 || day>31 || month<1 || month>12) {
             return {error: `invalid date ${date}`}
@@ -92,8 +92,15 @@ function ImportWidget() {
         const iso_timestamp = `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
         const timestamp = moment.tz(iso_timestamp, 'Europe/Rome').toISOString()
         if (!timestamp) return {error: `invalid timestamp`, iso_timestamp}
+        const count = parseInt(count_string)
+        if (!count) return {error: `invalid count ${count_string}`}
+        const amountCents = count * 20
         return {
             timestamp,
+            count,
+            amountCents,
+            email,
+            description: `imported on ${new Date().toISOString()}`,
         }
 
         function pad(n:number) {
@@ -101,22 +108,21 @@ function ImportWidget() {
         }
     }
 
-    function submitData() {
-        const rows:any[] = []
-
-        // parse data
+    async function submitData() {
+        setTable([])
         for (const row of table) {
+            const variables = parseRow(row)
+            if (variables.error) {
+                setTable(table => [...table, row])
+                continue
+            } 
+            try {
+                console.log(`submitting ${JSON.stringify(variables)}`)
+                const res = await submitTransaction({ variables })
+                setTable(table => [...table, [JSON.stringify(res),row[1],row[2],row[3]]])
+            } catch (err) {
+                setTable(table => [...table, [`${err}`,row[1],row[2],row[3]]])
+            }
         }
-        /*
-        // submit data
-        for (const row of rows) {
-            submitTransaction({ variables: {
-                email,
-                amountCents,
-                count,
-                description
-              }})
-        }
-        */   
     }
 }

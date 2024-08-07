@@ -55,8 +55,8 @@ function Transactions() {
 }
 
 export const SAVE_TRANSACTION = gql`
-  mutation SaveTransaction($_id: String, $email: String, $count: Int, $amountCents: Int, $description: String) {
-    transaction(_id: $_id, email: $email, count: $count, amountCents: $amountCents, description: $description)
+  mutation SaveTransaction($_id: String, $timestamp: String, $email: String, $count: Int, $amountCents: Int, $description: String) {
+    transaction(_id: $_id, timestamp: $timestamp, email: $email, count: $count, amountCents: $amountCents, description: $description)
   }`
 
 function TransactionRow({transaction}:{
