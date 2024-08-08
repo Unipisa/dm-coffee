@@ -20,7 +20,7 @@ export default function ImportPage({}) {
     </Provider>
 }
 
-type COLS = [string,string,string,string]
+type COLS = string[]
 
 type RowType = {
     state: string
@@ -28,24 +28,32 @@ type RowType = {
 }
 
 function parseRow(cols: COLS) {
-    const [date, time, count_string, email] = cols
+    const [date, time, count_string, amount_string, email, description] = cols
     const [day,month,year] = date.split('/').map(x => parseInt(x))
     if (year<2000 || year > 3000 || day<1 || day>31 || month<1 || month>12) {
         return {error: `invalid date ${date}`}
     }
-    const [hours,minutes,seconds] = time.split(':').map(x => parseInt(x))
+    const [hours,minutes,seconds] = time ? time.split(':').map(x => parseInt(x)) : [12,0,0]
     const iso_timestamp = `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
     const timestamp = moment.tz(iso_timestamp, 'Europe/Rome').toISOString()
     if (!timestamp) return {error: `invalid timestamp`, iso_timestamp}
-    const count = parseInt(count_string)
-    if (!count) return {error: `invalid count ${count_string}`}
-    const amountCents = count * 20
+
+    const count = count_string ? parseInt(count_string) : 0
+    if (count_string && `${count}` !== count_string) return {error: `invalid count ${count_string}`}
+
+    const amountCents = amount_string ? parseFloat(amount_string)*100 : 0
+    if (amount_string && `${amountCents/100}` !== amount_string) return {error: `invalid amount ${amount_string}`}
+    
+    if (count == 0 && amountCents == 0) return {error: `either count or amount required`}
+
+    if (!email.includes('@')) return {error: `invalid email ${email}`}
+
     return {
         timestamp,
-        count,
-        amountCents,
+        count: count_string ? count : 0,
+        amountCents: amount_string ? -amountCents : count*20,
         email,
-        description: `imported on ${new Date().toISOString()}`,
+        description: description || `imported on ${new Date().toISOString()}`,
     }
 
     function pad(n:number) {
@@ -54,6 +62,7 @@ function parseRow(cols: COLS) {
 }
 
 function validate(cols: COLS) {
+    return JSON.stringify(parseRow(cols))
     const error = parseRow(cols).error
     if (!error) return 'valid'
     return error
@@ -62,7 +71,7 @@ function validate(cols: COLS) {
 function ImportWidget() {
     const [submitTransaction, transactionMutation] = useMutation(SAVE_TRANSACTION, {
         refetchQueries: ["GetTransactions"]})
-    const headers = ["data", "ora", "conteggio", "email"]
+    const headers = ["data", "ora", "conteggio", "importo", "email", "descrizione", "1", "2"]
     const [table, setTable] = useState<RowType[]>([])
     return <>
         Seleziona le righe dal tuo foglio di calcolo
@@ -108,9 +117,7 @@ function ImportWidget() {
 
     function importData(incoming_data: string) {
         setTable(incoming_data.split('\n').map(row => {
-            const incoming_cols = row.split('\t')
-            while (incoming_cols.length < 4) incoming_cols.push('')
-            const cols = incoming_cols.slice(0, 4) as COLS
+            const cols = row.split('\t')
             
             return {
                 state: validate(cols),
@@ -122,10 +129,10 @@ function ImportWidget() {
     function move_left(col: number) {
         setTable(table.map((row:RowType) => {
             const new_cols:COLS = [...row.cols]
-            new_cols[col-1] = row.cols[col]
-            new_cols[col] = row.cols[col-1]
+            new_cols[col-1] = row.cols[col] || ''
+            new_cols[col] = row.cols[col-1] || ''
             return {
-                state: 'new',
+                state: validate(new_cols),
                 cols: new_cols
             }
         }))
