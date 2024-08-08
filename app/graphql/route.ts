@@ -282,7 +282,7 @@ const resolvers = {
       const db = (await databasePromise).db
       const account = db.collection("account")
       const data = {
-        timestamp: timestamp || new Date(), 
+        timestamp: timestamp ? new Date(timestamp) : new Date(), 
         email, count, amountCents, description 
       }
       console.log(`making transaction: ${JSON.stringify(data)}}`)

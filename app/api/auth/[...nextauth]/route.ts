@@ -4,6 +4,7 @@ import { MongoDBAdapter } from "@next-auth/mongodb-adapter"
 
 import databasePromise from "../../../db"
 import config from "../../../config"
+import Credentials from "next-auth/providers/credentials"
 
 async function getClient() {
   const { client } = await databasePromise
@@ -15,6 +16,7 @@ const {
   GOOGLE_AUTH_CLIENT_SECRET,
   DATABASE_URI,
   DATABASE_NAME,
+  UNSAFE_AUTOMATIC_LOGIN_EMAIL,
 } = config
 
 const authOptions: AuthOptions = {
@@ -53,6 +55,16 @@ function discoverProviders() {
       }))
   } else {
     console.warn("GOOGLE_AUTH_CLIENT_ID not set, Google provider not available")
+  }
+  if (UNSAFE_AUTOMATIC_LOGIN_EMAIL) {
+    lst.push(Credentials({
+      authorize: async credentials => ({
+        id: 'unsafe_automatic_login',
+        email: UNSAFE_AUTOMATIC_LOGIN_EMAIL,
+        admin: true,
+      }),
+      credentials: {}
+    }))
   }
   return lst
 }
