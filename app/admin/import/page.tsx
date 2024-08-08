@@ -27,7 +27,7 @@ type RowType = {
     cols: COLS
 }
 
-const headers = ['date', 'time', 'count', 'email', 'description']
+const headers = ['date', 'time', 'count', 'amount', 'email', 'description']
 type Headers = typeof headers[number]
 type Mapping = Record<Headers, number | undefined>
 type Variables = {
@@ -63,7 +63,7 @@ function parseRow(mapping: Mapping, cols: COLS) {
     }
 
     if (mapped.amount) {
-        const amountCents = parseFloat(mapped.amount)*100
+        const amountCents = Math.round(parseFloat(mapped.amount)*100)
         if (`${amountCents/100}` !== mapped.amount) error ||= `invalid amount ${mapped.amount}`
         variables.amountCents = amountCents
         if (!mapped.count) variables.count = 0
@@ -191,6 +191,21 @@ function ImportWidget() {
                 const {error, ...variables} = parse
                 console.log(`submitting ${JSON.stringify(parse)}`)
                 const res = await submitTransaction({ variables })
+                if (variables.amountCents && (parse.description?.includes('PayPal:')
+                    || parse.description?.includes('CRO:')
+                    || parse.description?.includes('satispay'))
+                ) {
+                    // partita doppia
+                    const res2 = await submitTransaction({ 
+                        variables: {
+                            ...variables,
+                            amountCents: -variables.amountCents,
+                            email: 'filippo.callegaro@unipi.it',
+                            description: `da ${variables.email}: ${variables.description}`
+                        }
+                    }) 
+                    // se fallisce siamo del gatto...
+                }
                 setTable(table => [...table, 
                     { 
                         state: res.data ? 'imported' : 'api error',
