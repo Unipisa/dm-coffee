@@ -19,7 +19,7 @@ export default function Admin({}) {
     </Provider>
 }
 
-export const GET_TRANSACTIONS = gql`
+const GET_TRANSACTIONS = gql`
   query GetTransactions {
     transactions {
       _id 
@@ -54,7 +54,7 @@ function Transactions() {
     </table>
 }
 
-export const SAVE_TRANSACTION = gql`
+const SAVE_TRANSACTION = gql`
   mutation SaveTransaction($_id: String, $timestamp: String, $email: String, $count: Int, $amountCents: Int, $description: String) {
     transaction(_id: $_id, timestamp: $timestamp, email: $email, count: $count, amountCents: $amountCents, description: $description)
   }`

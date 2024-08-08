@@ -1,14 +1,15 @@
 "use client"
-import { useQuery, gql, useMutation } from '@apollo/client'
+import { gql, useMutation } from '@apollo/client'
 import { useState } from 'react'
 import moment from 'moment-timezone'
 
-import { SAVE_TRANSACTION } from '../page'
 import Provider from '../../components/provider'
-import Balance from '../../components/balance'
-import Loading from '../../components/loading'
-import Error from '../../components/error'
 import Button from '../../components/Button'
+
+const SAVE_TRANSACTION = gql`
+  mutation SaveTransaction($_id: String, $timestamp: String, $email: String, $count: Int, $amountCents: Int, $description: String) {
+    transaction(_id: $_id, timestamp: $timestamp, email: $email, count: $count, amountCents: $amountCents, description: $description)
+  }`
 
 export default function ImportPage({}) {
     return <Provider>
@@ -65,7 +66,7 @@ function ImportWidget() {
     const [table, setTable] = useState<RowType[]>([])
     return <>
         Seleziona le righe dal tuo foglio di calcolo
-        e premi il pulsante "Incolla dalla clipboard"
+        e premi il pulsante [Incolla dalla clipboard]
         <br />
         <Button
             onClick={async () => {
@@ -82,7 +83,7 @@ function ImportWidget() {
         <Button
             onClick={() => submitData()}
         >
-            Carica dati 'valid' dalla tabella
+            Carica dati &quot;valid&quot; dalla tabella
         </Button>
         <table>
             <thead>
