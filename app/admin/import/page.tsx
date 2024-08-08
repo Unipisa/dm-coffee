@@ -27,43 +27,67 @@ type RowType = {
     cols: COLS
 }
 
-function parseRow(cols: COLS) {
-    const [date, time, count_string, amount_string, email, description] = cols
-    const [day,month,year] = date.split('/').map(x => parseInt(x))
-    if (year<2000 || year > 3000 || day<1 || day>31 || month<1 || month>12) {
-        return {error: `invalid date ${date}`}
+const headers = ['date', 'time', 'count', 'email', 'description']
+type Headers = typeof headers[number]
+type Mapping = Record<Headers, number | undefined>
+type Variables = {
+    timestamp?: string
+    count?: number
+    amountCents?: number
+    email?: string
+    description?: string
+}
+
+function parseRow(mapping: Mapping, cols: COLS) {
+    let error = ''
+    const mapped = Object.fromEntries(headers.map(h => [h,mapping[h]===undefined ? '' : cols[mapping[h]]]))
+    const variables: Variables = {}
+
+    if (mapped.date) {
+        const [day,month,year] = mapped.date.split('/').map(x => parseInt(x))
+        if (year<2000 || year > 3000 || day<1 || day>31 || month<1 || month>12) error ||= `invalid date ${mapped.date}`
+        const [hours,minutes,seconds] = mapped.time ? mapped.time.split(':').map(x => parseInt(x)) : [12,0,0]
+        const iso_timestamp = `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+        const timestamp = moment.tz(iso_timestamp, 'Europe/Rome').toISOString()
+        if (!timestamp) error ||= `invalid timestamp ${iso_timestamp}`
+        variables.timestamp = timestamp
+    } else {
+        error ||= `date is required`
     }
-    const [hours,minutes,seconds] = time ? time.split(':').map(x => parseInt(x)) : [12,0,0]
-    const iso_timestamp = `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
-    const timestamp = moment.tz(iso_timestamp, 'Europe/Rome').toISOString()
-    if (!timestamp) return {error: `invalid timestamp`, iso_timestamp}
 
-    const count = count_string ? parseInt(count_string) : 0
-    if (count_string && `${count}` !== count_string) return {error: `invalid count ${count_string}`}
+    if (mapped.count) {
+        const count = parseInt(mapped.count)
+        if (`${count}` !== mapped.count) error ||= `invalid count ${mapped.count}`
+        variables.count = count
+        if (!mapped.amount) variables.amountCents = count * 20 
+    }
 
-    const amountCents = amount_string ? parseFloat(amount_string)*100 : 0
-    if (amount_string && `${amountCents/100}` !== amount_string) return {error: `invalid amount ${amount_string}`}
-    
-    if (count == 0 && amountCents == 0) return {error: `either count or amount required`}
+    if (mapped.amount) {
+        const amountCents = parseFloat(mapped.amount)*100
+        if (`${amountCents/100}` !== mapped.amount) error ||= `invalid amount ${mapped.amount}`
+        variables.amountCents = amountCents
+        if (!mapped.count) variables.count = 0
+    }
 
-    if (!email.includes('@')) return {error: `invalid email ${email}`}
+    if (!mapped.count && !mapped.amount) error ||= `either count or amount required`
+
+    variables.email = mapped.email
+    if (!mapped.email || !mapped.email.includes('@')) error ||= `invalid email ${mapped.email}`
+
+    variables.description = mapped.description || `imported on ${new Date().toISOString()}`
 
     return {
-        timestamp,
-        count: count_string ? count : 0,
-        amountCents: amount_string ? -amountCents : count*20,
-        email,
-        description: description || `imported on ${new Date().toISOString()}`,
+        ...variables,
+        error,
     }
 
     function pad(n:number) {
         return ('00'+n).slice(-2)
-    }
+    }    
 }
 
-function validate(cols: COLS) {
-    return JSON.stringify(parseRow(cols))
-    const error = parseRow(cols).error
+function validate(mapping: Mapping, cols: COLS) {
+    const error = parseRow(mapping, cols).error
     if (!error) return 'valid'
     return error
 }
@@ -71,8 +95,11 @@ function validate(cols: COLS) {
 function ImportWidget() {
     const [submitTransaction, transactionMutation] = useMutation(SAVE_TRANSACTION, {
         refetchQueries: ["GetTransactions"]})
-    const headers = ["data", "ora", "conteggio", "importo", "email", "descrizione", "1", "2"]
     const [table, setTable] = useState<RowType[]>([])
+    const [mapping, setMapping] = useState<Mapping>({})
+
+    const ncols = table.reduce((max, el) => Math.max(el.cols.length,max), 0)
+
     return <>
         Seleziona le righe dal tuo foglio di calcolo
         e premi il pulsante [Incolla dalla clipboard]
@@ -98,15 +125,40 @@ function ImportWidget() {
             <thead>
                 <tr>
                     <th>state</th>
-                    {headers.map((header,i) => 
-                    <th key={header}>{header} {i>0 && <Button onClick={() => move_left(i)}>&lt;=</Button>}</th>)}
+                    <th>timestamp</th>
+                    <th>count</th>
+                    <th>amountCents</th>
+                    <th>email</th>
+                    <th>description</th>
+                    {Array.from({length: ncols}, (_,i) => i).map(i => 
+                        <th key={i}>
+                            <select value={
+                                (Object.entries(mapping)
+                                    .filter(([h,n]) => n===i)[0]||[''])[0]
+                            } onChange={
+                                evt => {
+                                    const val = evt.target.value
+                                    setMapping(mapping => ({...mapping, [val]: i}))
+                                }
+                            }>  
+                                <option value=''>-- map --</option>
+                                {headers.map(h => 
+                                    <option value={h}>{h}</option>
+                                )}
+                            </select>
+                        </th>)}
                 </tr>
             </thead>
             <tbody>
-                {table.map((row, i) => 
-                    <tr key={i}>
-                        <td>{row.state}</td>
-                        {row.cols.map((cell, j) => 
+                {table.map((row, i)=> ({row, i, parse: parseRow(mapping, row.cols)})).map(item => 
+                    <tr key={item.i}>
+                        <td>{item.row.state || item.parse.error || 'valid'}</td>
+                        <td>{new Date(item.parse.timestamp||'').toLocaleString()}</td>
+                        <td>{item.parse.count}</td>
+                        <td>{item.parse.amountCents}</td>
+                        <td>{item.parse.email}</td>
+                        <td>{item.parse.description}</td>
+                        {item.row.cols.map((cell, j) => 
                             <td key={j}>{cell}</td>
                         )}
                     </tr>
@@ -120,20 +172,8 @@ function ImportWidget() {
             const cols = row.split('\t')
             
             return {
-                state: validate(cols),
+                state: '',
                 cols
-            }
-        }))
-    }
-
-    function move_left(col: number) {
-        setTable(table.map((row:RowType) => {
-            const new_cols:COLS = [...row.cols]
-            new_cols[col-1] = row.cols[col] || ''
-            new_cols[col] = row.cols[col-1] || ''
-            return {
-                state: validate(new_cols),
-                cols: new_cols
             }
         }))
     }
@@ -141,20 +181,21 @@ function ImportWidget() {
     async function submitData() {
         setTable([])
         for (const row of table) {
-            if (row.state != 'valid') {
+            if (row.state != '') {
                 setTable(table => [...table, row])
                 continue
             }
-            const variables = parseRow(row.cols)
-            if (variables.error) {
+            const parse = parseRow(mapping, row.cols)
+            if (parse.error) {
                 setTable(table => [...table, {
-                    state: variables.error,
+                    state: parse.error,
                     cols: row.cols
                 }])
                 continue
             } 
             try {
-                console.log(`submitting ${JSON.stringify(variables)}`)
+                const {error, ...variables} = parse
+                console.log(`submitting ${JSON.stringify(parse)}`)
                 const res = await submitTransaction({ variables })
                 setTable(table => [...table, 
                     { 
