@@ -59,7 +59,7 @@ function parseRow(mapping: Mapping, cols: COLS) {
         const count = parseInt(mapped.count)
         if (`${count}` !== mapped.count) error ||= `invalid count ${mapped.count}`
         variables.count = count
-        if (!mapped.amount) variables.amountCents = count * 20 
+        if (!mapped.amount) variables.amountCents = -count * 20 
     }
 
     if (mapped.amount) {
@@ -84,12 +84,6 @@ function parseRow(mapping: Mapping, cols: COLS) {
     function pad(n:number) {
         return ('00'+n).slice(-2)
     }    
-}
-
-function validate(mapping: Mapping, cols: COLS) {
-    const error = parseRow(mapping, cols).error
-    if (!error) return 'valid'
-    return error
 }
 
 function ImportWidget() {
