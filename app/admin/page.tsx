@@ -79,6 +79,7 @@ function TransactionRow({transaction}:{
 
   return <tr>
     <td>{transaction?(new Date(timestamp)).toLocaleDateString('it'):''}</td>
+    <td>{transaction?(new Date(timestamp)).toLocaleTimeString('it'):''}</td>
     <td>{transaction && !editing ? originalEmail
       :<input type="email" placeholder="email" value={newEmail} onChange={e => setEmail(e.target.value)} />}
     </td>

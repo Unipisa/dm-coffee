@@ -24,6 +24,7 @@ export default function Transactions() {
         <tbody>{data.myTransactions.map((transaction: any, i: number) => 
             <tr key={i}>
               <td>{(new Date(transaction.timestamp)).toLocaleDateString('it')}</td>
+              <td>{(new Date(transaction.timestamp)).toLocaleTimeString('it')}</td>
               <td>{transaction.count}</td>
               <td>{(transaction.amountCents/100).toFixed(2)}</td> 
               <td>{transaction.description}</td>
