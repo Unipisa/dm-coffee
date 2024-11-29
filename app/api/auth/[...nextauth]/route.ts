@@ -14,7 +14,6 @@ async function getClient() {
 const { 
   GOOGLE_AUTH_CLIENT_ID, 
   GOOGLE_AUTH_CLIENT_SECRET,
-  DATABASE_URI,
   DATABASE_NAME,
   UNSAFE_AUTOMATIC_LOGIN_EMAIL,
 } = config
