@@ -12,6 +12,7 @@ import Error from './components/error'
 import Balance from './components/balance'
 import Transactions from './components/transactions'
 
+
 const GET_PROFILE = gql`
   query GetProfile {
     profile {
@@ -40,7 +41,7 @@ function Dashboard() {
   }
 
   return <main>
-    <h1>dm-coffee</h1>
+    <h1>dm-coffee </h1>
     <Admin />
     <Pairing />
     <CoffeeForm />
