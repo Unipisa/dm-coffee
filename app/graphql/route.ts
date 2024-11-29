@@ -220,6 +220,7 @@ const resolvers = {
         const transactions = db.collection("account")
         const COST = 20
         await transactions.insertOne({
+          count: 1,
           email: user.email,
           amountCents: -COST,
           description: `coffee`,
@@ -240,6 +241,8 @@ const resolvers = {
         ]).toArray()
         if (pairings.length === 0) {
           return ["tessera sconosciuta","apri coffee.dm.unipi.it"].join('\n') 
+        } else if (!code) {
+          return ["tessera non valida"].join('\n')
         } else if (pairings.length === 1) {
           await users.updateOne({ _id: pairings[0]._id }, 
             { $set: { 
