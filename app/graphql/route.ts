@@ -261,7 +261,6 @@ const resolvers = {
       const result = await account.insertOne({
         count: count,
         amountCents: -count * 20,
-        count,
         description: "coffee",
         email: context.user.email,
         timestamp: new Date()

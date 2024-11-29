@@ -40,7 +40,11 @@ type Variables = {
 
 function parseRow(mapping: Mapping, cols: COLS) {
     let error = ''
-    const mapped = Object.fromEntries(headers.map(h => [h,mapping[h]===undefined ? '' : cols[mapping[h]]]))
+    const mapped = Object.fromEntries(headers.map(h => {
+        let val = mapping[h]
+        if (val === undefined) return [h, '']        
+        return [h,cols[val]]
+    }))
     const variables: Variables = {}
 
     if (mapped.date) {
@@ -137,7 +141,7 @@ function ImportWidget() {
                             }>  
                                 <option value=''>-- map --</option>
                                 {headers.map(h => 
-                                    <option value={h}>{h}</option>
+                                    <option key={h} value={h}>{h}</option>
                                 )}
                             </select>
                         </th>)}
