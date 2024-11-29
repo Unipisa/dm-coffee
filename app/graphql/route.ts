@@ -258,6 +258,7 @@ const resolvers = {
       console.log("mutation context:", context)
       const account = db.collection("account")
       const result = await account.insertOne({
+        count: count,
         amountCents: -count * 20,
         description: "coffee",
         email: context.user.email,
