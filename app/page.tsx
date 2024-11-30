@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import './globals.css'; // Import global styles if you have them
 import { gql, useQuery, useMutation, useApolloClient } from '@apollo/client';
 
+import Headers from './components/Headers'
 import Button from './components/Button'
 import Provider from './components/provider'
 import Credit from './components/credit'
@@ -11,7 +12,6 @@ import Loading from './components/loading'
 import Error from './components/error'
 import Balance from './components/balance'
 import Transactions from './components/transactions'
-
 
 const GET_PROFILE = gql`
   query GetProfile {
@@ -34,14 +34,8 @@ export default function Home() {
 }
 
 function Dashboard() {
-  const { data: session } = useSession()
-
-  if (!session?.user) {
-    return <></>
-  }
-
   return <main>
-    <Admin />
+    <Headers />
     <Pairing />
     <CoffeeForm />
     <Credit />

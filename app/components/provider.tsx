@@ -1,5 +1,5 @@
 "use client"
-import { useSession, signIn, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { SessionProvider } from 'next-auth/react'
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import { redirect } from "next/navigation"
@@ -29,7 +29,7 @@ function Auth() {
             ☕
         </div>
     if (!session?.user) return redirect('/api/auth/signin')
-    return <Headers session={session} />
+    return null
 }
 
 

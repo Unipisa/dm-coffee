@@ -29,7 +29,7 @@ const authOptions: AuthOptions = {
         // and: profile.email
       }
       return true
-    }
+    },
   },
   session: {
     strategy: 'jwt',

@@ -1,6 +1,6 @@
 import { getProviders, signIn } from 'next-auth/react'
 
-import LoginButton from './LoginButton'
+import LoginButton from '../../../components/LoginButton'
 import package_json from '../../../../package.json'
 
 export default async function Signin({}) {

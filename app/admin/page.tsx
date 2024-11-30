@@ -1,17 +1,17 @@
 "use client"
 import { useQuery, gql, useMutation } from '@apollo/client'
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
 
 import Provider from '../components/provider'
 import Balance from '../components/balance'
 import Loading from '../components/loading'
 import Error from '../components/error'
+import Headers from '../components/Headers'
 
 export default function Admin({}) {
     return <Provider>
-        <h1>dm-coffee admin</h1>
-        Torna alla <a href='/'>pagina principale</a>
-        <br />
+        <Headers />
         Vai alla <a href='/admin/import'>pagina di importazione</a>
         <Balance />
         <Transactions />
