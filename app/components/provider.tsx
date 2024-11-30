@@ -17,6 +17,7 @@ export default function Provider({children}:{
 }) {
     return <SessionProvider>
         <ApolloProvider client={apolloClient}>
+        <Headers />
         <Auth />
         {children}
         </ApolloProvider>

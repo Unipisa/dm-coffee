@@ -11,7 +11,6 @@ import Headers from '../components/Headers'
 
 export default function Admin({}) {
     return <Provider>
-        <Headers />
         Vai alla <a href='/admin/import'>pagina di importazione</a>
         <Balance />
         <Transactions />

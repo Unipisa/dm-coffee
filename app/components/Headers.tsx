@@ -1,8 +1,8 @@
-"use client";
 import { signOut, useSession } from 'next-auth/react'
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
-import { gql, useQuery } from '@apollo/client';
+import { gql, useQuery } from '@apollo/client'
+import { usePathname } from 'next/navigation'
 
 import package_json from '../../package.json'
 import Error from './error'
@@ -22,12 +22,8 @@ function classNames(...classes: any) {
 
 export default function Headers() {
     const { data: session } = useSession()
-    const { loading, error, data } = useQuery(GET_PROFILE);
-    const current_path = window.location.pathname
-
-    if (!session?.user) return <></>  
-    if (loading) return <span>...</span>;
-    if (error) return <Error error={error} />;
+    const { data } = useQuery(GET_PROFILE);
+    const current_path = usePathname()
 
     const isAdmin = data?.profile?.admin;
 

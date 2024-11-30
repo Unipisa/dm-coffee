@@ -1,8 +1,8 @@
 "use client"
 import { useState } from 'react'
-import { useSession } from 'next-auth/react'
 import './globals.css'; // Import global styles if you have them
 import { gql, useQuery, useMutation, useApolloClient } from '@apollo/client';
+import { useRouter } from 'next/navigation'
 
 import Headers from './components/Headers'
 import Button from './components/Button'
@@ -34,8 +34,8 @@ export default function Home() {
 }
 
 function Dashboard() {
+  const router = useRouter()
   return <main>
-    <Headers />
     <Pairing />
     <CoffeeForm />
     <Credit />
@@ -81,16 +81,6 @@ function CoffeeForm() {
       </Button>
     </div>
   </form>
-}
-
-function Admin() {
-  const { loading, error, data } = useQuery(GET_PROFILE)
-  if (loading) return <Loading /> 
-  if (error) return <Error error={error} />
-  if (!data.profile.admin) return <></>
-  return <div>
-    Accedi alla <a href="admin">pagina di amministrazione</a>
-  </div>
 }
 
 const REQUEST_PAIRING = gql`
