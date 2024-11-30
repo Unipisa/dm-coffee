@@ -2,6 +2,7 @@
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { SessionProvider } from 'next-auth/react'
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
+import { redirect } from "next/navigation"
 
 import '../globals.css'; // Import global styles if you have them
 import Button from './Button'
@@ -24,17 +25,14 @@ export default function Provider({children}:{
 
 function Auth() {
     const { data: session } = useSession()
-    if (session?.user) {
-        return <p>{session.user.email} {}
-            <Button onClick={() => signOut()}>
-                esci
-            </Button>
-        </p>
-    } else {
-        return <>
-            <Button onClick={() => signIn()}>
-                accedi
-            </Button>
-        </>
-    }
+    if (session === undefined) return <div className="text-center">
+            ☕
+        </div>
+    if (!session?.user) return redirect('/api/auth/signin')
+    return <p>{session.user.email} {}
+        <Button onClick={() => signOut()}>
+            esci
+        </Button>
+    </p>
 }
+

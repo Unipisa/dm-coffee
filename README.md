@@ -47,7 +47,6 @@ description="pagamento paypal"
 curl "http://localhost:3000/graphql" -H "Authorization: ${ADMIN_SECRET_TOKEN}" -H "content-type: application/json" --data-raw '{"operationName":"SaveTransaction","variables":{"email":"'"${email}"'","amountCents":'"${amountCents}"',"description":"'"${description}"'"},"query":"mutation SaveTransaction($email: String, $amountCents: Int, $description: String) { transaction(email: $email\n amountCents:$amountCents\n  description: $description) }"}'
 ```
 
-
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

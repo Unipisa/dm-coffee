@@ -37,7 +37,10 @@ const authOptions: AuthOptions = {
   },
   adapter: MongoDBAdapter(getClient(), {
     databaseName: DATABASE_NAME,
-  })
+  }),
+  pages: {
+    signIn: '/api/auth/signin',
+  }
 }
 
 const handler = NextAuth(authOptions)
