@@ -4,8 +4,8 @@ import { SessionProvider } from 'next-auth/react'
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import { redirect } from "next/navigation"
 
+import Headers from './Headers'
 import '../globals.css'; // Import global styles if you have them
-import Button from './Button'
 
 const apolloClient = new ApolloClient({
     uri: '/graphql',
@@ -29,10 +29,8 @@ function Auth() {
             ☕
         </div>
     if (!session?.user) return redirect('/api/auth/signin')
-    return <p>{session.user.email} {}
-        <Button onClick={() => signOut()}>
-            esci
-        </Button>
-    </p>
+    return <Headers session={session} />
 }
+
+
 

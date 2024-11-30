@@ -41,7 +41,6 @@ function Dashboard() {
   }
 
   return <main>
-    <h1>dm-coffee </h1>
     <Admin />
     <Pairing />
     <CoffeeForm />
