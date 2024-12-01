@@ -3,7 +3,7 @@ import { useQuery, gql, useMutation } from '@apollo/client'
 import { useState } from 'react'
 
 import Provider from '../components/Provider'
-import Balance from '../components/balance'
+import Balance from '../components/Balance'
 import Loading from '../components/loading'
 import Error from '../components/Error'
 
