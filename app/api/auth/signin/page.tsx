@@ -7,8 +7,8 @@ export default async function Signin({}) {
     const providers = await getProviders(); // Fetch authentication providers
     const google = providers?.google
 
-    if (!google) {
-        return <div>Google provider not available!</div>
+    if (google===undefined) {
+        return <div>Google provider not available! t1 {JSON.stringify(providers)}</div>
     }
 
     return <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">

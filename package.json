@@ -1,6 +1,6 @@
 {
   "name": "dm-coffee",
-  "version": "0.1.6t",
+  "version": "0.1.6t1",
   "private": true,
   "scripts": {
     "dev": "next dev",
