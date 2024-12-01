@@ -39,7 +39,7 @@ const authOptions: AuthOptions = {
     databaseName: DATABASE_NAME,
   }),
   pages: {
-    //signIn: '/api/auth/signin',
+    signIn: '/api/auth/signin',
   }
 }
 

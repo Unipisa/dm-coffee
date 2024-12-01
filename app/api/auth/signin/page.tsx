@@ -1,3 +1,4 @@
+"use client"
 import { getProviders, signIn } from 'next-auth/react'
 
 import LoginButton from '../../../components/LoginButton'
@@ -8,7 +9,7 @@ export default async function Signin({}) {
     const google = providers?.google
 
     if (google===undefined) {
-        return <div>Google provider not available! t1 {JSON.stringify(providers)}</div>
+        return <div>Google provider not available! {JSON.stringify(providers)}</div>
     }
 
     return <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
