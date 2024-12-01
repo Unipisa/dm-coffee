@@ -1,20 +1,10 @@
 import { signOut, useSession } from 'next-auth/react'
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
-import { gql, useQuery } from '@apollo/client'
 import { usePathname } from 'next/navigation'
 
 import package_json from '../../package.json'
-import Error from './error'
-
-const GET_PROFILE = gql`
-  query GetProfile {
-    profile {
-      email
-      admin
-      code
-    }
-  }`
+import {useProfile} from './Provider'
 
 function classNames(...classes: any) {
   return classes.filter(Boolean).join(' ')
@@ -22,17 +12,14 @@ function classNames(...classes: any) {
 
 export default function Headers() {
     const { data: session } = useSession()
-    const { data } = useQuery(GET_PROFILE);
+    const profile = useProfile()
     const current_path = usePathname()
 
-    const isAdmin = data?.profile?.admin;
+    const isAdmin = profile?.admin;
 
     const navigation: { name: string, href: string, current: boolean }[] = [
         { name: 'Dashboard', href: '/', current: current_path === '/' },
-        // { name: 'Team', href: '#', current: router.pathname === '/team' },
-        // { name: 'Projects', href: '#', current: router.pathname === '/projects' },
-        // { name: 'Calendar', href: '#', current: router.pathname === '/calendar' },
-    ];
+    ]
 
     if (isAdmin) {
         navigation.push({ name: 'Admin', href: '/admin', current: current_path === '/admin' });
@@ -102,10 +89,10 @@ export default function Headers() {
                 >
                 <MenuItem>
                     <a
-                    href="#"
+                    href="/pairing"
                     className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
                     >
-                    Settings
+                        { profile?.code ? `tessera ${profile.code}` : 'associa la tessera' }
                     </a>
                 </MenuItem>
                 <MenuItem>
@@ -114,7 +101,7 @@ export default function Headers() {
                         onClick={() => signOut()}
                         className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
                     >
-                    Sign out
+                    esci
                     </a>
                 </MenuItem>
                 </MenuItems>

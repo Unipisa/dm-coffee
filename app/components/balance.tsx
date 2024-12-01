@@ -1,7 +1,7 @@
 import { useQuery, gql } from '@apollo/client'
 
 import Loading from './loading'
-import Error from './error'
+import Error from './Error'
 
 const GET_BALANCE = gql`
   query GetBalance {

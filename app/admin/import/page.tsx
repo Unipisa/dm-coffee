@@ -3,7 +3,7 @@ import { gql, useMutation } from '@apollo/client'
 import { useState } from 'react'
 import moment from 'moment-timezone'
 
-import Provider from '../../components/provider'
+import Provider from '../../components/Provider'
 import Button from '../../components/Button'
 
 const SAVE_TRANSACTION = gql`

@@ -1,13 +1,11 @@
 "use client"
 import { useQuery, gql, useMutation } from '@apollo/client'
 import { useState } from 'react'
-import { useSession } from 'next-auth/react'
 
-import Provider from '../components/provider'
+import Provider from '../components/Provider'
 import Balance from '../components/balance'
 import Loading from '../components/loading'
-import Error from '../components/error'
-import Headers from '../components/Headers'
+import Error from '../components/Error'
 
 export default function Admin({}) {
     return <Provider>
