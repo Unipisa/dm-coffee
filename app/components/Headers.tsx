@@ -21,6 +21,10 @@ export default function Headers() {
         { name: 'caffé', href: '/', current: current_path === '/' },
     ]
 
+    if (profile && !profile.code) {
+        navigation.push({ name: 'associa tessera', href: '/pairing', current: current_path === '/pairing' })
+    }
+
     if (isAdmin) {
         navigation.push({ name: 'elenco', href: '/admin', current: current_path === '/admin' })
         navigation.push({ name: 'utenti', href: '/admin/users', current: current_path === '/admin/users' })
