@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return <html lang="en">
-      <body className={inter.className}>
+      <body className={inter.className+" lg:max-w-5xl xl:max-w-7xl"}>
         {children}
       </body>
   </html>

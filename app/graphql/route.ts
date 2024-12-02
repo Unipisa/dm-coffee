@@ -3,7 +3,6 @@ import { startServerAndCreateNextHandler } from '@as-integrations/next'
 import { gql } from 'graphql-tag'
 import { getToken } from "next-auth/jwt"
 import databasePromise from "../db"
-import { NextApiRequest, NextApiResponse } from 'next'
 import type { NextRequest } from "next/server"
 import { ObjectId } from 'mongodb'
 

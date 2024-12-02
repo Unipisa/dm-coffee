@@ -17,7 +17,6 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
-  max-width: 640px;
   margin: 60px auto;
 }
 

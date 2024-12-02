@@ -34,11 +34,20 @@ export default function Headers() {
     // see: https://tailwindui.com/components/application-ui/navigation/navbars
 
     return <Disclosure as="nav" className="bg-gray-200">
-        <div className="mx-1">
-            dm-coffee
-            <span className="mx-1 text-[10px]">
-                {package_json.version}
-            </span>
+        <div className="mx-1 flex items-stretch">
+            <div>
+                dm-coffee
+                <span className="mx-1 text-[10px]">
+                    {package_json.version}
+                </span>
+            </div>
+            <div className="px-4"></div>
+            <div> {/* perché non viene allineato a destra?!? */}
+                { 
+                    session?.user?.email && 
+                        <i>{session?.user?.email}</i>
+                }
+            </div>
         </div>
         <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
         <div className="relative flex h-16 items-center justify-between">
