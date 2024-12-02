@@ -5,7 +5,7 @@ import {useMutation, gql, useApolloClient} from '@apollo/client'
 
 import Provider, {useProfile} from '../components/Provider'
 import Button from '../components/Button'
-import Loading from '../components/loading'
+import Loading from '../components/Loading'
 import Error from '../components/Error'
 
 export default function PairingPage() {

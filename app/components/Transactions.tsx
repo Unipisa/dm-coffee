@@ -1,6 +1,6 @@
 import { gql, useQuery } from '@apollo/client'
 
-import Loading from './loading'
+import Loading from './Loading'
 import Error from './Error'
 import { myDate, myTime } from '../utils'
 

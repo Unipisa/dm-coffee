@@ -4,7 +4,7 @@ import { getProviders, signIn } from 'next-auth/react'
 
 import LoginButton from '../../../components/LoginButton'
 import package_json from '../../../../package.json'
-import Loading from '@/app/components/loading'
+import Loading from '../../../components/Loading'
 
 export default function Signin({}) {
     const [providers, setProviders] = useState<any>(null)

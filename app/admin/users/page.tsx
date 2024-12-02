@@ -3,7 +3,7 @@ import { useQuery, gql, useMutation } from '@apollo/client'
 import { useState } from 'react'
 
 import Provider from '../../components/Provider'
-import Loading from '../../components/loading'
+import Loading from '../../components/Loading'
 import Error from '../../components/Error'
 import {myDate, myTime} from '../../utils'
 
