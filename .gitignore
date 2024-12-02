@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 arduino/esp-caffe/credentials.h
+
+# generated icons
+public/*icon*.png
+public/favicon.ico

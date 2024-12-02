@@ -1,12 +1,26 @@
 "use client"
+import { useEffect, useState } from 'react'
 import { getProviders, signIn } from 'next-auth/react'
 
 import LoginButton from '../../../components/LoginButton'
 import package_json from '../../../../package.json'
+import Loading from '@/app/components/loading'
 
-export default async function Signin({}) {
-    const providers = await getProviders(); // Fetch authentication providers
+export default function Signin({}) {
+    const [providers, setProviders] = useState<any>(null)
     const google = providers?.google
+
+    useEffect(() => {
+        async function fetchProviders() {
+            const res = await getProviders()
+            setProviders(res)
+        }
+        fetchProviders()
+    }, [])
+
+    if (!providers) {
+        return <Loading />
+    }
 
     if (google===undefined) {
         return <div>Google provider not available! {JSON.stringify(providers)}</div>

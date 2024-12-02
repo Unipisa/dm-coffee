@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "generate-favicon": "node ./generate-favicon.js",
-    "postbuild": "npm run generate-favicon"
+    "prebuild": "npm run generate-favicon"
   },
   "dependencies": {
     "@apollo/client": "^3.10.6",
