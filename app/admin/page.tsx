@@ -6,13 +6,12 @@ import Provider from '../components/Provider'
 import Balance from '../components/Balance'
 import Loading from '../components/loading'
 import Error from '../components/Error'
+import { myDate, myTime } from '../utils'
 
 export default function Admin({}) {
     return <Provider>
-        Vai alla <a href='/admin/import'>pagina di importazione</a>
         <Balance />
         <Transactions />
-        <Users />
     </Provider>
 }
 
@@ -38,17 +37,48 @@ type Transaction = {
 }
 
 function Transactions() {
+    const [edit,setEdit] = useState(false)
     const {loading, error, data} = useQuery(GET_TRANSACTIONS)
     if (loading) return <Loading />
     if (error) return <Error error={error}/>
-    return <table>
-        <tbody>
-          <TransactionRow />
-          {data.transactions.map((transaction: Transaction) => 
-            <TransactionRow key={transaction._id} transaction={transaction} />
-          )}
-        </tbody>
+    return <>
+      <div className="flex">
+      {edit
+        ? <a className="ml-auto" href="#" onClick={() => setEdit(false)}>
+          termina modifiche
+          </a>
+        :<a className="ml-auto" href="#" onClick={() => setEdit(true)}>
+          modifica
+          </a>}
+        </div>
+      <table>
+      <thead>
+        <tr>
+          <th colSpan={2}>
+            data
+          </th>
+          <th>
+            email
+          </th>
+          <th>
+            #
+          </th>
+          <th>
+            €
+          </th>
+          <th>
+            description
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {edit && <TransactionRow edit={edit}/>}
+        {data.transactions.map((transaction: Transaction) => 
+          <TransactionRow key={transaction._id} transaction={transaction} edit={edit}/>
+        )}
+      </tbody>
     </table>
+    </>
 }
 
 const SAVE_TRANSACTION = gql`
@@ -56,8 +86,9 @@ const SAVE_TRANSACTION = gql`
     transaction(_id: $_id, timestamp: $timestamp, email: $email, count: $count, amountCents: $amountCents, description: $description)
   }`
 
-function TransactionRow({transaction}:{
-  transaction?: Transaction
+function TransactionRow({transaction, edit}:{
+  transaction?: Transaction,
+  edit?: boolean
 }) {
   const originalEmail = transaction?.email || ''
   const originalCount = transaction?.count || 0
@@ -75,13 +106,14 @@ function TransactionRow({transaction}:{
     refetchQueries: ["GetTransactions"]})
 
   return <tr>
-    <td>{transaction?(new Date(timestamp)).toLocaleDateString('it'):''}</td>
-    <td>{transaction?(new Date(timestamp)).toLocaleTimeString('it'):''}</td>
-    <td>{transaction && !editing ? originalEmail
-      :<input type="email" placeholder="email" value={newEmail} onChange={e => setEmail(e.target.value)} />}
+    <td>{transaction?myDate(timestamp):''}</td>
+    <td>{transaction?myTime(timestamp):''}</td>
+    <td>{transaction && !editing 
+      ? originalEmail
+      : <input type="email" placeholder="email" value={newEmail} onChange={e => setEmail(e.target.value)} />}
     </td>
     <td>{transaction && !editing ? originalCount
-      :<input type="number" placeholder="count" value={newCount || ''} onChange={e => setCount(parseInt(e.target.value) || 0)} />}
+      :<input type="number" placeholder="count" value={newCount || ''} size={4} onChange={e => setCount(parseInt(e.target.value) || 0)} />}
     </td>
     <td>{transaction && !editing ?(`${(originalAmount/100).toFixed(2)}€`)
       :<input type="number" placeholder="cents" value={newAmount || ''} onChange={e => setAmount(parseInt(e.target.value))} />}
@@ -89,23 +121,25 @@ function TransactionRow({transaction}:{
     <td>{transaction && !editing ?originalDescription
     :<input type="text" placeholder="description" value={newDescription} onChange={e => setDescription(e.target.value)} />}
     </td>
-    <td>{modified && 
-      <button className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
-        disabled={transactionMutation.loading}
-        onClick={save}>
-        salva
-      </button>}      
-      {modified || editing && 
-      <button className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-        onClick={cancel}>
-        annulla
-      </button>}
-      {transaction && !editing && 
-      <button className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
-        onClick={e => setEditing(true)}>
-        modifica
-      </button>}
-    </td>
+    {edit && 
+      <td>{modified && 
+        <button className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
+          disabled={transactionMutation.loading}
+          onClick={save}>
+          salva
+        </button>}      
+        {modified || editing && 
+        <button className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          onClick={cancel}>
+          annulla
+        </button>}
+        {transaction && !editing && 
+        <button className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
+          onClick={e => setEditing(true)}>
+          modifica
+        </button>}
+      </td>
+    }
   </tr>
 
   function cancel() {
@@ -129,33 +163,4 @@ function TransactionRow({transaction}:{
     setEditing(false)
     if (!transaction) cancel()
   }
-}
-
-const GET_USERS = gql`
-query GetUsers {
-  users {
-    email
-    creditCents
-    timestamp
-  }
-}`
-
-function Users() {
-    const {loading, error, data} = useQuery(GET_USERS)
-    if (loading) return <Loading />
-    if (error) return <Error error={error}/>
-    return <>
-      <h2>bilancio utenti</h2>
-      <table>
-        <tbody>
-            {data.users.map((user: any, i: number) => 
-                <tr key={i}>
-                    <td>{user.email}</td>
-                    <td>{(user.creditCents/100).toFixed(2)}€</td>
-                    <td>{(new Date(user.timestamp)).toLocaleDateString('it')}</td>
-                </tr>
-            )}
-        </tbody>
-      </table>
-    </>
 }

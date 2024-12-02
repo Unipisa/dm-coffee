@@ -1,8 +1,8 @@
 import { gql, useQuery } from '@apollo/client'
-import {Temporal} from '@js-temporal/polyfill'
 
 import Loading from './loading'
 import Error from './Error'
+import { myDate, myTime } from '../utils'
 
 const GET_MY_TRANSACTIONS = gql`
   query GetMyTransactions {
@@ -45,32 +45,3 @@ export default function Transactions() {
       </table>
   }
 
-function myDateTime(isoTimestamp: string|undefined|null) {
-  if (isoTimestamp === undefined) return '???'
-  if (isoTimestamp === null) return '---'
-
-  const instant = Temporal.Instant.from(isoTimestamp)
-  const zonedDateTime = instant.toZonedDateTimeISO('Europe/Rome')
-  const {day, month, year, hour, minute} = zonedDateTime
-  return `${day}.${month}.${year} ${hour}:${String(minute).padStart(2, '0')}`
-}  
-
-function myDate(isoTimestamp: string|undefined|null) {
-  if (isoTimestamp === undefined) return '???'
-  if (isoTimestamp === null) return '---'
-
-  const instant = Temporal.Instant.from(isoTimestamp)
-  const zonedDateTime = instant.toZonedDateTimeISO('Europe/Rome')
-  const {day, month, year} = zonedDateTime
-  return `${day}.${month}.${year}`
-}  
-
-function myTime(isoTimestamp: string|undefined|null) {
-  if (isoTimestamp === undefined) return '???'
-  if (isoTimestamp === null) return '---'
-
-  const instant = Temporal.Instant.from(isoTimestamp)
-  const zonedDateTime = instant.toZonedDateTimeISO('Europe/Rome')
-  const {hour, minute} = zonedDateTime
-  return `${hour}:${String(minute).padStart(2, '0')}`
-}

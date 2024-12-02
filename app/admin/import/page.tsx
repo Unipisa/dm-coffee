@@ -13,9 +13,6 @@ const SAVE_TRANSACTION = gql`
 
 export default function ImportPage({}) {
     return <Provider>
-        <h1>dm-coffee import data</h1>
-        Torna alla <a href='/admin'>pagina di amministrazione</a>
-        <br />
         <ImportWidget />
     </Provider>
 }
@@ -99,8 +96,10 @@ function ImportWidget() {
     const ncols = table.reduce((max, el) => Math.max(el.cols.length,max), 0)
 
     return <>
-        Seleziona le righe dal tuo foglio di calcolo
-        e premi il pulsante [Incolla dalla clipboard]
+        { table.length === 0 && <p>
+            Copia le righe dal tuo foglio di calcolo
+            e premi il pulsante.
+        </p>}
         <br />
         <Button
             onClick={async () => {
@@ -114,11 +113,10 @@ function ImportWidget() {
         >
             Incolla dalla clipboard
         </Button> {}
-        <Button
-            onClick={() => submitData()}
-        >
+        { table.length>0 && <Button onClick={submitData}>
             Carica dati &quot;valid&quot; dalla tabella
-        </Button>
+        </Button>}
+        <div className="my-2"/>
         <table>
             <thead>
                 <tr>

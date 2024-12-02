@@ -1,6 +1,6 @@
 import { signOut, useSession } from 'next-auth/react'
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
 import { usePathname } from 'next/navigation'
 
 import package_json from '../../package.json'
@@ -18,11 +18,13 @@ export default function Headers() {
     const isAdmin = profile?.admin;
 
     const navigation: { name: string, href: string, current: boolean }[] = [
-        { name: 'Dashboard', href: '/', current: current_path === '/' },
+        { name: 'caffé', href: '/', current: current_path === '/' },
     ]
 
     if (isAdmin) {
-        navigation.push({ name: 'Admin', href: '/admin', current: current_path === '/admin' });
+        navigation.push({ name: 'elenco', href: '/admin', current: current_path === '/admin' })
+        navigation.push({ name: 'utenti', href: '/admin/users', current: current_path === '/admin/users' })
+        navigation.push({ name: 'importazione', href: '/admin/import', current: current_path === '/admin/import' })
     }
         
     // see: https://tailwindui.com/components/application-ui/navigation/navbars
@@ -76,11 +78,14 @@ export default function Headers() {
                 <MenuButton className="relative flex rounded-full bg-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                     <span className="absolute -inset-1.5" />
                     <span className="sr-only">Open user menu</span>
-                    <img
-                    alt=""
-                    src={session?.user?.image || ""}
-                    className="size-8 rounded-full"
-                    />
+                    {session?.user?.image 
+                        ? <img
+                            alt=""
+                            src={session.user.image}
+                            className="size-8 rounded-full"
+                            />
+                        : <UserIcon className="size-8 rounded-full" />
+                        }
                 </MenuButton>
                 </div>
                 <MenuItems
