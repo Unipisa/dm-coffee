@@ -42,7 +42,13 @@ const typeDefs = gql`
   type User {
     email: String
     creditCents: Int
+    count: Int
     timestamp: Timestamp
+  }
+
+  type Balance {
+    cents: Int
+    count: Int  
   }
 
   type Query {
@@ -51,12 +57,12 @@ const typeDefs = gql`
     """
     credit of the currently logged in user (debit if negative)
     """
-    credit: Int
+    credit: Balance
     
     """
     total balance (all users) (debit if negative)
     """
-    balance: Int
+    balance: Balance
     
     """
     transactions of the currently logged in user
@@ -126,20 +132,31 @@ const resolvers = {
       const account = db.collection("account")
       const result = await account.aggregate([
         { $match: { email: context.user.email } },
-        { $group: { _id: null, creditCents: { $sum: "$amountCents" } } }
+        { $group: { 
+          _id: null, 
+          creditCents: { $sum: "$amountCents" },
+          count: { $sum: "$count" },
+        } }
       ]).toArray()
       if (result.length === 0) return 0
-      return result[0].creditCents
+      return {cents: result[0].creditCents, count: result[0].count}
     },
 
     balance: async(_: any, __: {}, context: Context) => {
       const db = (await databasePromise).db
       const account = db.collection("account")
       const result = await account.aggregate([
-        { $group: { _id: null, balanceCents: { $sum: "$amountCents" } } }
+        { $group: { 
+          _id: null, 
+          cents: { $sum: "$amountCents" },
+          count: { $sum: "$count" },
+        } }
       ]).toArray()
       if (result.length === 0) return 0
-      return result[0].balanceCents
+      return {
+        cents: result[0].cents,
+        count: result[0].count
+      }
     },
 
     myTransactions: async(_: any, __: {}, context: Context) => {
@@ -175,12 +192,13 @@ const resolvers = {
         { $group: { 
           _id: "$email", 
           creditCents: { $sum: "$amountCents" },
+          count: { $sum: "$count" },
           timestamp: { $max: "$timestamp" },
         }},
-        { $project: { _id: 0, email: "$_id", creditCents: 1, timestamp: 1 } },
+        { $project: { _id: 0, email: "$_id", creditCents: 1, count: 1, timestamp: 1 } },
         { $sort: { email: 1 } }
       ]).toArray()
-      console.log("users:", result)
+      // console.log("users:", result)
       return result
     }
 
@@ -220,6 +238,7 @@ const resolvers = {
         const transactions = db.collection("account")
         const COST = 20
         await transactions.insertOne({
+          count: 1,
           email: user.email,
           amountCents: -COST,
           description: `coffee`,
@@ -240,6 +259,8 @@ const resolvers = {
         ]).toArray()
         if (pairings.length === 0) {
           return ["tessera sconosciuta","apri coffee.dm.unipi.it"].join('\n') 
+        } else if (!code) {
+          return ["tessera non valida"].join('\n')
         } else if (pairings.length === 1) {
           await users.updateOne({ _id: pairings[0]._id }, 
             { $set: { 
@@ -261,7 +282,6 @@ const resolvers = {
       const result = await account.insertOne({
         count: count,
         amountCents: -count * 20,
-        count,
         description: "coffee",
         email: context.user.email,
         timestamp: new Date()

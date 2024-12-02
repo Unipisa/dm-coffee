@@ -1,11 +1,14 @@
 import { useQuery, gql } from '@apollo/client'
 
 import Loading from './loading'
-import Error from './error'
+import Error from './Error'
 
 const GET_BALANCE = gql`
   query GetBalance {
-    balance
+    balance {
+      cents
+      count
+    }
   }`
 
 export default function Balance() {
@@ -15,7 +18,7 @@ export default function Balance() {
     if (loading) return <Loading />
     if (error) return <Error error={error}/>
     return <div>
-      <p>Bilancio complessivo: € {(data.balance / 100).toFixed(2)}</p>
+      <p>Bilancio complessivo: € {(data.balance.cents / 100).toFixed(2)} per {data.balance.count} caffé</p>
     </div>
   }
   

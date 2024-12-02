@@ -14,7 +14,6 @@ async function getClient() {
 const { 
   GOOGLE_AUTH_CLIENT_ID, 
   GOOGLE_AUTH_CLIENT_SECRET,
-  DATABASE_URI,
   DATABASE_NAME,
   UNSAFE_AUTOMATIC_LOGIN_EMAIL,
 } = config
@@ -30,7 +29,7 @@ const authOptions: AuthOptions = {
         // and: profile.email
       }
       return true
-    }
+    },
   },
   session: {
     strategy: 'jwt',
@@ -38,7 +37,10 @@ const authOptions: AuthOptions = {
   },
   adapter: MongoDBAdapter(getClient(), {
     databaseName: DATABASE_NAME,
-  })
+  }),
+  pages: {
+    signIn: '/api/auth/signin',
+  }
 }
 
 const handler = NextAuth(authOptions)

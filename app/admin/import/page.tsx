@@ -3,7 +3,7 @@ import { gql, useMutation } from '@apollo/client'
 import { useState } from 'react'
 import moment from 'moment-timezone'
 
-import Provider from '../../components/provider'
+import Provider from '../../components/Provider'
 import Button from '../../components/Button'
 
 const SAVE_TRANSACTION = gql`
@@ -13,9 +13,6 @@ const SAVE_TRANSACTION = gql`
 
 export default function ImportPage({}) {
     return <Provider>
-        <h1>dm-coffee import data</h1>
-        Torna alla <a href='/admin'>pagina di amministrazione</a>
-        <br />
         <ImportWidget />
     </Provider>
 }
@@ -40,7 +37,11 @@ type Variables = {
 
 function parseRow(mapping: Mapping, cols: COLS) {
     let error = ''
-    const mapped = Object.fromEntries(headers.map(h => [h,mapping[h]===undefined ? '' : cols[mapping[h]]]))
+    const mapped = Object.fromEntries(headers.map(h => {
+        let val = mapping[h]
+        if (val === undefined) return [h, '']        
+        return [h,cols[val]]
+    }))
     const variables: Variables = {}
 
     if (mapped.date) {
@@ -95,8 +96,10 @@ function ImportWidget() {
     const ncols = table.reduce((max, el) => Math.max(el.cols.length,max), 0)
 
     return <>
-        Seleziona le righe dal tuo foglio di calcolo
-        e premi il pulsante [Incolla dalla clipboard]
+        { table.length === 0 && <p>
+            Copia le righe dal tuo foglio di calcolo
+            e premi il pulsante.
+        </p>}
         <br />
         <Button
             onClick={async () => {
@@ -110,11 +113,10 @@ function ImportWidget() {
         >
             Incolla dalla clipboard
         </Button> {}
-        <Button
-            onClick={() => submitData()}
-        >
+        { table.length>0 && <Button onClick={submitData}>
             Carica dati &quot;valid&quot; dalla tabella
-        </Button>
+        </Button>}
+        <div className="my-2"/>
         <table>
             <thead>
                 <tr>
@@ -137,7 +139,7 @@ function ImportWidget() {
                             }>  
                                 <option value=''>-- map --</option>
                                 {headers.map(h => 
-                                    <option value={h}>{h}</option>
+                                    <option key={h} value={h}>{h}</option>
                                 )}
                             </select>
                         </th>)}
