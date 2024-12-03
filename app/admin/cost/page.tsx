@@ -44,7 +44,9 @@ function CostHistory() {
             </tr>
         </thead>
         <tbody>
-            {dataHistory.costHistory.map((timestamp: string, cents: number) => 
+            {dataHistory.costHistory.map(({timestamp,cents}: {
+                  timestamp: string, 
+                  cents: number}) => 
                 <tr key={timestamp}>
                     <td>{myDate(timestamp)}</td>
                     <td>{myTime(timestamp)}</td>

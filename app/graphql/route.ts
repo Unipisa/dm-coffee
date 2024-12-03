@@ -135,11 +135,7 @@ const typeDefs = gql`
 const resolvers = {
   Query: {
     cost: async(_: any, __: {}, context: Context) => {
-      const db = (await databasePromise).db
-      const cost = db.collection("cost")
-      // Find the latest cost based on timestamp
-      const result = await cost.findOne({}, { sort: { timestamp: -1 } })
-      return result ? result.cents : 20
+      return await getCost()
     },
 
     costHistory: async(_: any, __: {}, context: Context) => {
@@ -286,8 +282,8 @@ const resolvers = {
       const users = db.collection("users")
       const user = await users.findOne({ code })
       if (user) {
+        const COST = await getCost()
         const transactions = db.collection("account")
-        const COST = 20
         await transactions.insertOne({
           count: 1,
           email: user.email,
@@ -330,9 +326,10 @@ const resolvers = {
       const db = (await databasePromise).db
       console.log("mutation context:", context)
       const account = db.collection("account")
+      const COST = await getCost()
       const result = await account.insertOne({
         count: count,
-        amountCents: -count * 20,
+        amountCents: -count * COST,
         description: "coffee",
         email: context.user.email,
         timestamp: new Date()
@@ -406,5 +403,12 @@ const handler = startServerAndCreateNextHandler<NextRequest,Context>(server, {
       }
     }
 });
+
+async function getCost(): Promise<number> {
+  const db = (await databasePromise).db
+  const cost = db.collection("cost")
+  const result = await cost.findOne({}, { sort: { timestamp: -1 } })
+  return result ? result.cents : 20
+}
 
 export { handler as GET, handler as POST };
