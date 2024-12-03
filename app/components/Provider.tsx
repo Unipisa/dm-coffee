@@ -23,7 +23,9 @@ export default function Provider({children}:{
             <ProfileProvider>
                 <Headers />
                 <Auth />
-                {children}
+                <div className='mx-2 mt-2'>
+                    {children}
+                </div>
             </ProfileProvider>
         </ApolloProvider>
     </SessionProvider>
