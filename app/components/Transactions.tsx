@@ -6,6 +6,8 @@ import Amount from './Amount'
 import { myDate, myTime } from '../utils'
 import Table from './Table'
 import Thead from './Thead'
+import Td from './Td'
+import Tr from './Tr'
 
 const GET_MY_TRANSACTIONS = gql`
   query GetMyTransactions {
@@ -35,13 +37,13 @@ export default function Transactions() {
           </tr>
         </Thead>
         <tbody>{data.myTransactions.map((transaction: any, i: number) => 
-            <tr className="border-0 odd:bg-white odd:dark:bg-gray-900 even:bg-gray-100 even:dark:bg-gray-800 border-b dark:border-gray-700" key={i}>
-              <td className="border-0 text-sm px-6 py-4">{myDate(transaction.timestamp)} {myTime(transaction.timestamp)}</td>
-              <td className="border-0 text-sm px-6 py-4" align="right">{transaction.count || ""}</td>
-              <td className="border-0 text-sm px-6 py-4" align="right"><Amount cents={transaction.amountCents}/></td> 
-              <td className="border-0 text-sm px-6 py-4">{transaction.description}</td>
-              <td className="border-0 text-sm px-6 py-4">{transaction.code||''}</td>
-            </tr>
+            <Tr className="" key={i}>
+              <Td>{myDate(transaction.timestamp)} {myTime(transaction.timestamp)}</Td>
+              <Td className="text-right">{transaction.count || ""}</Td>
+              <Td className="text-right"><Amount cents={transaction.amountCents}/></Td> 
+              <Td>{transaction.description}</Td>
+              <Td>{transaction.code||''}</Td>
+            </Tr>
           )}
         </tbody>
       </Table>

@@ -11,7 +11,7 @@ export default function Button({ children, onClick, variant, disabled }:{
         default: 'text-white bg-myBlue hover:bg-myBlue-dark focus:ring-4 focus:outline-none focus:ring-myBlue-light font-medium rounded-lg w-full text-sm sm:w-auto px-5 py-2.5 text-center',
         danger: 'text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800',
         alert: 'text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800',
-        secondary: 'text-white bg-gray-500 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-500-light font-medium rounded-lg text-sm sm:w-auto px-5 py-2.5 text-center',
+        secondary: 'border-2 bg-gray-100 hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-500-light font-medium rounded-lg text-sm sm:w-auto px-5 py-2.5 text-center',
     }[variant || 'default']
     return <button 
         type="button" 
