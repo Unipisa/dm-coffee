@@ -28,6 +28,11 @@ const typeDefs = gql`
     code: String
   }
 
+  type Cost {
+    timestamp: Timestamp
+    cents: Int
+  }
+
   type Transaction {
     _id: String
     count: Int
@@ -53,6 +58,16 @@ const typeDefs = gql`
   type Query {
     profile: Profile
     
+    """
+    cost of a coffee
+    """
+    cost: Int
+
+    """
+    cost of a coffee (history)
+    """
+    costHistory: [Cost]
+
     """
     credit of the currently logged in user (debit if negative)
     """
@@ -80,6 +95,12 @@ const typeDefs = gql`
   }
 
   type Mutation {
+    """
+    modificare il costo di un caffé
+    richiede autenticazione admin
+    """
+    setCost(cents: Int!): Boolean    
+
     """
     addebita $count caffé
     richiede autenticazione
@@ -113,6 +134,20 @@ const typeDefs = gql`
 `
 const resolvers = {
   Query: {
+    cost: async(_: any, __: {}, context: Context) => {
+      const db = (await databasePromise).db
+      const cost = db.collection("cost")
+      // Find the latest cost based on timestamp
+      const result = await cost.findOne({}, { sort: { timestamp: -1 } })
+      return result ? result.cents : 20
+    },
+
+    costHistory: async(_: any, __: {}, context: Context) => {
+      const db = (await databasePromise).db
+      const cost = db.collection("cost")
+      const result = await cost.find({}, { sort: { timestamp: -1 } }).toArray()
+      return result
+    },
 
     profile: async(_: any, __: {}, context: Context) => {
       if (!context.user) return 
@@ -204,6 +239,23 @@ const resolvers = {
   },
 
   Mutation: {
+    setCost: async(_: any, {cents}: {cents: number}, context: Context) => {
+      // check if authorization bearer token is valid
+      const authorization = context.req.headers.get('authorization')
+
+      if (!context.user?.email || !config.ADMINS.split(',').includes(context.user.email)) {
+        console.log("invalid authorization", authorization)
+        // no token provided, check credentials
+        if (!context.user) throw new Error("not logged in")
+        throw new Error("not admin")
+      }
+
+      const db = (await databasePromise).db
+      const cost = db.collection("cost")
+      await cost.insertOne({ timestamp: new Date(), cents })
+      return true
+    },
+
     card_request_pairing: async(_: any, __: {}, context: Context) => {
       if (!context.user) throw new Error("not logged in")
       const db = (await databasePromise).db

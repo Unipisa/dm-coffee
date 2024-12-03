@@ -28,7 +28,6 @@ export default function Headers() {
     if (isAdmin) {
         navigation.push({ name: 'elenco', href: '/admin', current: current_path === '/admin' })
         navigation.push({ name: 'utenti', href: '/admin/users', current: current_path === '/admin/users' })
-        navigation.push({ name: 'importazione', href: '/admin/import', current: current_path === '/admin/import' })
     }
         
     // see: https://tailwindui.com/components/application-ui/navigation/navbars
@@ -113,6 +112,26 @@ export default function Headers() {
                         { profile?.code ? `tessera ${profile.code}` : 'associa la tessera' }
                     </a>
                 </MenuItem>
+                {
+                    isAdmin && <>
+                        <MenuItem>
+                            <a
+                                href="/admin/import"
+                                className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                                >
+                            importazione
+                            </a>
+                        </MenuItem>
+                        <MenuItem>
+                            <a
+                                href="/admin/cost"
+                                className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                                >
+                            costo unitario
+                            </a>
+                        </MenuItem>
+                    </>
+                }
                 <MenuItem>
                     <a
                         href="#"
