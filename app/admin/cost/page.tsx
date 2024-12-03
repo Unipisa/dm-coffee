@@ -1,6 +1,5 @@
 "use client"
-import { useQuery, gql, useMutation } from '@apollo/client'
-import { useState } from 'react'
+import { useQuery, gql } from '@apollo/client'
 
 import Provider from '../../components/Provider'
 import Loading from '../../components/Loading'

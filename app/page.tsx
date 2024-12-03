@@ -16,8 +16,8 @@ export default function Home() {
 function Dashboard() {
   return <main>
     <CoffeeForm />
-    <Credit />
     <Balance />
+    <Credit />
     <Transactions />
   </main>
 }

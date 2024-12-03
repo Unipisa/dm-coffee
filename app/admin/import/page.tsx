@@ -1,15 +1,24 @@
 "use client"
-import { gql, useMutation } from '@apollo/client'
+import { gql, useMutation, useQuery } from '@apollo/client'
 import { useState } from 'react'
 import moment from 'moment-timezone'
 
 import Provider from '../../components/Provider'
 import Button from '../../components/Button'
+import Loading from '../../components/Loading'
+import Error from '../../components/Error'
+import { myDate } from '../../utils'
 
 const SAVE_TRANSACTION = gql`
   mutation SaveTransaction($_id: String, $timestamp: String, $email: String, $count: Int, $amountCents: Int, $description: String) {
     transaction(_id: $_id, timestamp: $timestamp, email: $email, count: $count, amountCents: $amountCents, description: $description)
   }`
+
+const GET_COST = gql`
+    query GetCost {
+        cost
+    }`
+
 
 export default function ImportPage({}) {
     return <Provider>
@@ -35,7 +44,7 @@ type Variables = {
     description?: string
 }
 
-function parseRow(mapping: Mapping, cols: COLS) {
+function parseRow(mapping: Mapping, cols: COLS, COST: number) {
     let error = ''
     const mapped = Object.fromEntries(headers.map(h => {
         let val = mapping[h]
@@ -60,7 +69,7 @@ function parseRow(mapping: Mapping, cols: COLS) {
         const count = parseInt(mapped.count)
         if (`${count}` !== mapped.count) error ||= `invalid count ${mapped.count}`
         variables.count = count
-        if (!mapped.amount) variables.amountCents = -count * 20 
+        if (!mapped.amount) variables.amountCents = -count * COST
     }
 
     if (mapped.amount) {
@@ -75,7 +84,7 @@ function parseRow(mapping: Mapping, cols: COLS) {
     variables.email = mapped.email
     if (!mapped.email || !mapped.email.includes('@')) error ||= `invalid email ${mapped.email}`
 
-    variables.description = mapped.description || `imported on ${new Date().toISOString()}`
+    variables.description = mapped.description || `importato il ${myDate(new Date().toISOString())}`
 
     return {
         ...variables,
@@ -88,12 +97,17 @@ function parseRow(mapping: Mapping, cols: COLS) {
 }
 
 function ImportWidget() {
+    const {loading: loadingCost, error: errorCost, data: dataCost} = useQuery(GET_COST)
+    const COST = dataCost?.cost
     const [submitTransaction, transactionMutation] = useMutation(SAVE_TRANSACTION, {
         refetchQueries: ["GetTransactions"]})
     const [table, setTable] = useState<RowType[]>([])
     const [mapping, setMapping] = useState<Mapping>({})
 
     const ncols = table.reduce((max, el) => Math.max(el.cols.length,max), 0)
+
+    if (loadingCost) return <Loading />
+    if (errorCost) return <Error error={errorCost}/>
 
     return <>
         { table.length === 0 && <p>
@@ -146,16 +160,16 @@ function ImportWidget() {
                 </tr>
             </thead>
             <tbody>
-                {table.map((row, i)=> ({row, i, parse: parseRow(mapping, row.cols)})).map(item => 
+                {table.map((row, i)=> ({row, i, parse: parseRow(mapping, row.cols, COST)})).map(item => 
                     <tr key={item.i}>
-                        <td>{item.row.state || item.parse.error || 'valid'}</td>
+                        <td className={"bg-gray-300 " + (item.row.state || item.parse.error ? (item.row.state==="imported" ? "text-blue-500" : "text-red-500") : "text-green-500")}>{item.row.state || item.parse.error || 'valid'}</td>
                         <td>{new Date(item.parse.timestamp||'').toLocaleString()}</td>
                         <td>{item.parse.count}</td>
                         <td>{item.parse.amountCents}</td>
                         <td>{item.parse.email}</td>
                         <td>{item.parse.description}</td>
                         {item.row.cols.map((cell, j) => 
-                            <td key={j}>{cell}</td>
+                            <td className="bg-gray-300" key={j}>{cell}</td>
                         )}
                     </tr>
                 )}
@@ -181,7 +195,7 @@ function ImportWidget() {
                 setTable(table => [...table, row])
                 continue
             }
-            const parse = parseRow(mapping, row.cols)
+            const parse = parseRow(mapping, row.cols, COST)
             if (parse.error) {
                 setTable(table => [...table, {
                     state: parse.error,
