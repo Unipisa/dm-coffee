@@ -8,6 +8,7 @@ import Table from './Table'
 import Thead from './Thead'
 import Td from './Td'
 import Tr from './Tr'
+import Th from './Th'
 
 const GET_MY_TRANSACTIONS = gql`
   query GetMyTransactions {
@@ -29,11 +30,11 @@ export default function Transactions() {
     return <><Table>
         <Thead>
           <tr>
-            <th scope="col" className="text-left px-6 py-3">quando</th>
-            <th scope="col" className="text-right px-6 py-3">#</th>
-            <th scope="col" className="text-right px-6 py-3">€</th>
-            <th scope="col" className="text-left px-6 py-3">descrizione</th>
-            <th scope="col" className="text-left px-6 py-3">tessera</th>
+            <Th className="text-left" >quando</Th>
+            <Th className="text-right">#</Th>
+            <Th className="text-right">€</Th>
+            <Th className="text-left">descrizione</Th>
+            <Th className="text-left hidden md:block">tessera</Th>
           </tr>
         </Thead>
         <tbody>{data.myTransactions.map((transaction: any, i: number) => 
@@ -42,7 +43,7 @@ export default function Transactions() {
               <Td className="text-right">{transaction.count || ""}</Td>
               <Td className="text-right"><Amount cents={transaction.amountCents}/></Td> 
               <Td>{transaction.description}</Td>
-              <Td>{transaction.code||''}</Td>
+              <Td className="hidden md:block">{transaction.code||''}</Td>
             </Tr>
           )}
         </tbody>

@@ -40,17 +40,17 @@ export default function Headers() {
             <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
                 <span className="-inset-0.5" />
                 <span className="sr-only">Open main menu</span>
-                <Bars3Icon aria-hidden="true" className="block size-6 group-data-[open]:hidden" />
-                <XMarkIcon aria-hidden="true" className="hidden size-6 group-data-[open]:block" />
+                <Bars3Icon aria-hidden="true" className="block size-5 group-data-[open]:hidden" />
+                <XMarkIcon aria-hidden="true" className="hidden size-5 group-data-[open]:block" />
             </DisclosureButton>
             </div>            
             </div>
             <div className="flex">
-                <span className="h-10 w-auto text-3xl text-lg mr-2 hidden md:block mt-1">
+                <span className="h-10 w-auto text-3xl mr-2 hidden md:block mt-1">
                     ☕ 
                 </span>
                 <div className='h-8 mt-1'>
-                    <span className=''>dm-coffee <br></br></span>
+                    <span className='text-[14px] block'>dm-coffee <br></br></span>
                     <span className="text-[10px] block">
                     v{package_json.version}
                 </span>
@@ -60,7 +60,7 @@ export default function Headers() {
             <div className='flex-1'></div>
             <div className="mt-1">
             {/* Profile dropdown */}
-            <Menu as="div" className="relative ml-1">
+            <Menu as="div" className="mx-1">
                 <div>
                 <MenuButton className="relative flex rounded-full bg-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                     <span className="absolute -inset-1.5" />
