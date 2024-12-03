@@ -46,7 +46,7 @@ export default function Headers() {
             </div>            
             </div>
             <div className="flex">
-                <span className="h-10 w-auto text-4xl text-lg mr-2 hidden md:block">
+                <span className="h-10 w-auto text-3xl text-lg mr-2 hidden md:block mt-1">
                     ☕ 
                 </span>
                 <div className='h-8 mt-1'>
