@@ -1,6 +1,7 @@
 "use client"
 import { useQuery, gql, useMutation } from '@apollo/client'
 import { useState } from 'react'
+import { PencilIcon, ArchiveBoxArrowDownIcon, XMarkIcon } from '@heroicons/react/24/outline'
 
 import Provider from '../components/Provider'
 import Balance from '../components/Balance'
@@ -104,10 +105,11 @@ function TransactionRow({transaction, edit}:{
   const modified = (newEmail !== originalEmail) || (newCount !== originalCount) || (newAmount !== originalAmount) || (newDescription !== originalDescription)
   const [submitTransaction, transactionMutation] = useMutation(SAVE_TRANSACTION, {
     refetchQueries: ["GetTransactions"]})
+  const date = transaction ? timestamp : new Date().toISOString()
 
   return <tr>
-    <td>{transaction?myDate(timestamp):''}</td>
-    <td>{transaction?myTime(timestamp):''}</td>
+    <td>{myDate(date)}</td>
+    <td>{myTime(date)}</td>
     <td>{transaction && !editing 
       ? originalEmail
       : <input type="email" placeholder="email" value={newEmail} onChange={e => setEmail(e.target.value)} />}
@@ -126,17 +128,17 @@ function TransactionRow({transaction, edit}:{
         <button className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
           disabled={transactionMutation.loading}
           onClick={save}>
-          salva
+          <ArchiveBoxArrowDownIcon className="h-5 w-5"/>
         </button>}      
         {modified || editing && 
         <button className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
           onClick={cancel}>
-          annulla
+          <XMarkIcon className="h-5 w-5"/>
         </button>}
         {transaction && !editing && 
         <button className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
           onClick={e => setEditing(true)}>
-          modifica
+          <PencilIcon className="h-5 w-5"/>
         </button>}
       </td>
     }
