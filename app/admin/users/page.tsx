@@ -5,6 +5,7 @@ import { useState } from 'react'
 import Provider from '../../components/Provider'
 import Loading from '../../components/Loading'
 import Error from '../../components/Error'
+import Amount from '../../components/Amount'
 import {myDate, myTime} from '../../utils'
 
 export default function UsersPage({}) {
@@ -41,8 +42,8 @@ function Users() {
             {data.users.map((user: any, i: number) => 
                 <tr key={i}>
                     <td>{user.email}</td>
-                    <td align="right">{user.count}</td>
-                    <td align="right">{(user.creditCents/100).toFixed(2)}€</td>
+                    <td align="right">{user.count||""}</td>
+                    <td align="right"><Amount cents={user.creditCents}/></td>
                     <td align="right">{myDate(user.timestamp)}</td>
                 </tr>
             )}

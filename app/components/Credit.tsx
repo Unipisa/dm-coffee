@@ -2,6 +2,7 @@ import { useQuery, gql } from '@apollo/client'
 
 import Loading from './Loading'
 import Error from './Error'
+import Amount from './Amount'
 
 const GET_CREDIT = gql`
   query GetCredit {
@@ -16,7 +17,7 @@ export default function Credit() {
     if (loading) return <Loading />
     if (error) return <Error error={error}/>
     return <div>
-      <p>Il tuo credito: € {(data.credit.cents / 100).toFixed(2)}, caffé: {data.credit.count}</p>
+      <p>Il tuo credito: <Amount prefix="€" cents={data.credit.cents}/>, caffé: {data.credit.count}</p>
     </div>
   }
   

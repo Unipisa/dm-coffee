@@ -2,6 +2,7 @@ import { gql, useQuery } from '@apollo/client'
 
 import Loading from './Loading'
 import Error from './Error'
+import Amount from './Amount'
 import { myDate, myTime } from '../utils'
 
 const GET_MY_TRANSACTIONS = gql`
@@ -36,7 +37,7 @@ export default function Transactions() {
               <td className="text-sm">{myDate(transaction.timestamp)}</td>
               <td className="text-sm">{myTime(transaction.timestamp)}</td>
               <td align="right">{transaction.count || ""}</td>
-              <td align="right"><b>{(transaction.amountCents/100).toFixed(2)}</b></td> 
+              <td align="right"><Amount cents={transaction.amountCents}/></td> 
               <td><i>{transaction.description}</i></td>
               <td className="text-sm">{transaction.code||''}</td>
             </tr>

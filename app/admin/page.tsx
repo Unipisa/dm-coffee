@@ -7,6 +7,7 @@ import Provider from '../components/Provider'
 import Balance from '../components/Balance'
 import Loading from '../components/Loading'
 import Error from '../components/Error'
+import Amount from '../components/Amount'
 import { myDate, myTime } from '../utils'
 
 export default function Admin({}) {
@@ -114,11 +115,13 @@ function TransactionRow({transaction, edit}:{
       ? originalEmail
       : <input type="email" placeholder="email" value={newEmail} onChange={e => setEmail(e.target.value)} />}
     </td>
-    <td>{transaction && !editing ? originalCount
-      :<input type="number" placeholder="count" value={newCount || ''} size={4} onChange={e => setCount(parseInt(e.target.value) || 0)} />}
+    <td align="right">{transaction && !editing 
+      ? (originalCount || '')
+      : <input type="number" placeholder="count" value={newCount || ''} size={4} onChange={e => setCount(parseInt(e.target.value) || 0)} />}
     </td>
-    <td>{transaction && !editing ?(`${(originalAmount/100).toFixed(2)}€`)
-      :<input type="number" placeholder="cents" value={newAmount || ''} onChange={e => setAmount(parseInt(e.target.value))} />}
+    <td align="right">{transaction && !editing 
+      ? <Amount cents={originalAmount}/>
+      : <input type="number" placeholder="cents" value={newAmount || ''} onChange={e => setAmount(parseInt(e.target.value))} />}
     </td>
     <td>{transaction && !editing ?originalDescription
     :<input type="text" placeholder="description" value={newDescription} onChange={e => setDescription(e.target.value)} />}
