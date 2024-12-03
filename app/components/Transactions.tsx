@@ -26,7 +26,7 @@ export default function Transactions() {
         <thead>
           <tr>
             <th colSpan={2}>quando</th>
-            <th>caffé</th>
+            <th>#</th>
             <th>€</th>
             <th>descrizione</th>
             <th>tessera</th>

@@ -19,7 +19,7 @@ export default function Balance() {
     if (loading) return <Loading />
     if (error) return <Error error={error}/>
     return <div>
-      <p>Bilancio complessivo: <Amount prefix="€" cents={data.balance.cents}/> per <b>{data.balance.count}</b> caffé</p>
+      <p>Bilancio complessivo: <Amount prefix="€" cents={data.balance.cents}/>, caffé: <b>{data.balance.count}</b></p>
     </div>
   }
   
