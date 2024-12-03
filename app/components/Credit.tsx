@@ -1,6 +1,6 @@
 import { useQuery, gql } from '@apollo/client'
 
-import Loading from './loading'
+import Loading from './Loading'
 import Error from './Error'
 
 const GET_CREDIT = gql`

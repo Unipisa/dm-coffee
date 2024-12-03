@@ -5,7 +5,7 @@ import { PencilIcon, ArchiveBoxArrowDownIcon, XMarkIcon } from '@heroicons/react
 
 import Provider from '../components/Provider'
 import Balance from '../components/Balance'
-import Loading from '../components/loading'
+import Loading from '../components/Loading'
 import Error from '../components/Error'
 import { myDate, myTime } from '../utils'
 

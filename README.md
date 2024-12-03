@@ -31,7 +31,7 @@ segreto nella variabile d'ambiente `CARD_SECRET_TOKENS` (si possono inserire pi√
 ```bash
 CODE=codice_tessera
 CARD_SECRET_TOKEN=codice_segreto
-curl 'http://localhost:3000/graphql' -H "Authorization: ${SECRET_TOKENS}" -H 'content-type: application/json' --data-raw '{"operationName":"Card","variables":{"code":"'"${CODE}"'"},"query":"mutation Card($code: String!) {\n  card(code: $code)\n}"}'
+curl 'http://localhost:3000/graphql' -H "Authorization: ${CARD_SECRET_TOKEN}" -H 'content-type: application/json' --data-raw '{"operationName":"Card","variables":{"code":"'"${CODE}"'"},"query":"mutation Card($code: String!) {\n  card(code: $code)\n}"}'
 ```
 
 ## inserting a transaction with an API call

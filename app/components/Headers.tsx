@@ -21,20 +21,32 @@ export default function Headers() {
         { name: 'caffé', href: '/', current: current_path === '/' },
     ]
 
+    if (profile && !profile.code) {
+        navigation.push({ name: 'associa tessera', href: '/pairing', current: current_path === '/pairing' })
+    }
+
     if (isAdmin) {
         navigation.push({ name: 'elenco', href: '/admin', current: current_path === '/admin' })
         navigation.push({ name: 'utenti', href: '/admin/users', current: current_path === '/admin/users' })
-        navigation.push({ name: 'importazione', href: '/admin/import', current: current_path === '/admin/import' })
     }
         
     // see: https://tailwindui.com/components/application-ui/navigation/navbars
 
     return <Disclosure as="nav" className="bg-gray-200">
-        <div className="mx-1">
-            dm-coffee
-            <span className="mx-1 text-[10px]">
-                {package_json.version}
-            </span>
+        <div className="mx-1 flex items-stretch">
+            <div>
+                dm-coffee
+                <span className="mx-1 text-[10px]">
+                    {package_json.version}
+                </span>
+            </div>
+            <div className="px-4"></div>
+            <div> {/* perché non viene allineato a destra?!? */}
+                { 
+                    session?.user?.email && 
+                        <i>{session?.user?.email}</i>
+                }
+            </div>
         </div>
         <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
         <div className="relative flex h-16 items-center justify-between">
@@ -100,6 +112,26 @@ export default function Headers() {
                         { profile?.code ? `tessera ${profile.code}` : 'associa la tessera' }
                     </a>
                 </MenuItem>
+                {
+                    isAdmin && <>
+                        <MenuItem>
+                            <a
+                                href="/admin/import"
+                                className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                                >
+                            importazione
+                            </a>
+                        </MenuItem>
+                        <MenuItem>
+                            <a
+                                href="/admin/cost"
+                                className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                                >
+                            costo unitario
+                            </a>
+                        </MenuItem>
+                    </>
+                }
                 <MenuItem>
                     <a
                         href="#"
