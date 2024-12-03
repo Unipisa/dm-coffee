@@ -15,7 +15,7 @@ extern "C" {
 }
 
 #define SS_PIN D8
-#define RST_PIN D3
+#define RST_PIN 0
 
 #define API_URL "https://coffee.dm.unipi.it/graphql"
 #define LCD_TIMEOUT 5000

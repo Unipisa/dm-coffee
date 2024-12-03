@@ -1,5 +1,5 @@
 export default function Loading() {
-    return "..."
+    return <span>...</span>
 }
   
   

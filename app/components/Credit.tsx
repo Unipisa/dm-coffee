@@ -17,7 +17,7 @@ export default function Credit() {
     if (loading) return <Loading />
     if (error) return <Error error={error}/>
     return <div>
-      <p>Il tuo credito: <Amount prefix="€" cents={data.credit.cents}/>, caffé: <b>{data.credit.count}</b></p>
+      <p>Credito: <Amount prefix="€" cents={data.credit.cents}/> (<b>{data.credit.count}</b> caffè)</p>
     </div>
   }
   
