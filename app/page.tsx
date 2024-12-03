@@ -16,8 +16,10 @@ export default function Home() {
 function Dashboard() {
   return <main>
     <CoffeeForm />
-    <Credit />
-    <Balance />
+    <div className='flex justify-between'>
+      <Credit />
+      <div className="hidden sm:block"><Balance /></div>
+    </div>
     <Transactions />
   </main>
 }
