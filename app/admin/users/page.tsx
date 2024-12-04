@@ -7,11 +7,11 @@ import Loading from '../../components/Loading'
 import Error from '../../components/Error'
 import Amount from '../../components/Amount'
 import {myDate, myTime} from '../../utils'
-import Table from '@/app/components/Table'
-import Thead from '@/app/components/Thead'
-import Th from '@/app/components/Th'
-import Tr from '@/app/components/Tr'
-import Td from '@/app/components/Td'
+import Table from '../../components/Table'
+import Thead from '../../components/Thead'
+import Th from '../../components/Th'
+import Tr from '../../components/Tr'
+import Td from '../../components/Td'
 
 export default function UsersPage({}) {
     return <Provider>

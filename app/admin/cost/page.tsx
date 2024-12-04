@@ -7,10 +7,10 @@ import Error from '../../components/Error'
 import SetCost from '../../components/SetCost'
 import {myDate, myTime} from '../../utils'
 import Table from '../../components/Table'
-import Thead from '@/app/components/Thead'
-import Td from '@/app/components/Td'
-import Th from '@/app/components/Th'
-import Tr from '@/app/components/Tr'
+import Thead from '../../components/Thead'
+import Td from '../../components/Td'
+import Th from '../../components/Th'
+import Tr from '../../components/Tr'
 
 export default function CostPage({}) {
     return <Provider>
