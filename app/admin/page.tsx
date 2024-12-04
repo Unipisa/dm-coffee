@@ -9,6 +9,11 @@ import Loading from '../components/Loading'
 import Error from '../components/Error'
 import Amount from '../components/Amount'
 import { myDate, myTime } from '../utils'
+import Table from '../components/Table'
+import Thead from '../components/Thead'
+import Tr from '../components/Tr'
+import Td from '../components/Td'
+import Th from '../components/Th'
 
 export default function Admin({}) {
     return <Provider>
@@ -53,33 +58,33 @@ function Transactions() {
           modifica
           </a>}
         </div>
-      <table>
-      <thead>
+      <Table>
+      <Thead>
         <tr>
-          <th colSpan={2}>
+          <Th className="text-left">
             data
-          </th>
-          <th>
+          </Th>
+          <Th className="text-left">
             email
-          </th>
-          <th>
+          </Th>
+          <Th className="text-right">
             #
-          </th>
-          <th>
+          </Th>
+          <Th className="text-right">
             €
-          </th>
-          <th>
+          </Th>
+          <Th className="text-left">
             description
-          </th>
+          </Th>
         </tr>
-      </thead>
+      </Thead>
       <tbody>
         {edit && <TransactionRow edit={edit}/>}
         {data.transactions.map((transaction: Transaction) => 
           <TransactionRow key={transaction._id} transaction={transaction} edit={edit}/>
         )}
       </tbody>
-    </table>
+    </Table>
     </>
 }
 
@@ -108,26 +113,25 @@ function TransactionRow({transaction, edit}:{
     refetchQueries: ["GetTransactions"]})
   const date = transaction ? timestamp : new Date().toISOString()
 
-  return <tr>
-    <td>{myDate(date)}</td>
-    <td>{myTime(date)}</td>
-    <td>{transaction && !editing 
+  return <Tr>
+    <Td>{myDate(date)} {myTime(date)}</Td>
+    <Td>{transaction && !editing 
       ? originalEmail
       : <input type="email" placeholder="email" value={newEmail} onChange={e => setEmail(e.target.value)} />}
-    </td>
-    <td align="right">{transaction && !editing 
+    </Td>
+    <Td className="text-right">{transaction && !editing 
       ? (originalCount || '')
       : <input type="number" placeholder="count" value={newCount || ''} size={4} onChange={e => setCount(parseInt(e.target.value) || 0)} />}
-    </td>
-    <td align="right">{transaction && !editing 
+    </Td>
+    <Td className="text-right">{transaction && !editing 
       ? <Amount cents={originalAmount}/>
       : <input type="number" placeholder="cents" value={newAmount || ''} onChange={e => setAmount(parseInt(e.target.value))} />}
-    </td>
-    <td>{transaction && !editing ?originalDescription
+    </Td>
+    <Td>{transaction && !editing ?originalDescription
     :<input type="text" placeholder="description" value={newDescription} onChange={e => setDescription(e.target.value)} />}
-    </td>
+    </Td>
     {edit && 
-      <td>{modified && 
+      <Td>{modified && 
         <button className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
           disabled={transactionMutation.loading}
           onClick={save}>
@@ -143,9 +147,9 @@ function TransactionRow({transaction, edit}:{
           onClick={e => setEditing(true)}>
           <PencilIcon className="h-5 w-5"/>
         </button>}
-      </td>
+      </Td>
     }
-  </tr>
+  </Tr>
 
   function cancel() {
     setEmail(originalEmail)

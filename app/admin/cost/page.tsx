@@ -6,6 +6,11 @@ import Loading from '../../components/Loading'
 import Error from '../../components/Error'
 import SetCost from '../../components/SetCost'
 import {myDate, myTime} from '../../utils'
+import Table from '../../components/Table'
+import Thead from '@/app/components/Thead'
+import Td from '@/app/components/Td'
+import Th from '@/app/components/Th'
+import Tr from '@/app/components/Tr'
 
 export default function CostPage({}) {
     return <Provider>
@@ -35,24 +40,23 @@ function CostHistory() {
     return <>
         <p>Costo attuale: <b>{(dataCost.cost/100).toFixed(2)}€</b></p>
         <SetCost value={dataCost.cost}/>
-      <table>
-        <thead>
+      <Table>
+        <Thead>
             <tr>
-                <th colSpan={2}>data</th>
-                <th>€</th>
+                <Th className="text-left">data</Th>
+                <Th className="text-right">€</Th>
             </tr>
-        </thead>
+        </Thead>
         <tbody>
             {dataHistory.costHistory.map(({timestamp,cents}: {
                   timestamp: string, 
                   cents: number}) => 
-                <tr key={timestamp}>
-                    <td>{myDate(timestamp)}</td>
-                    <td>{myTime(timestamp)}</td>
-                    <td align="right">{(cents/100).toFixed(2)}€</td>
-                </tr>
+                <Tr key={timestamp}>
+                    <Td>{myDate(timestamp)} {myTime(timestamp)}</Td>
+                    <Td className="text-right">{(cents/100).toFixed(2)}€</Td>
+                </Tr>
             )}
         </tbody>
-      </table>
+      </Table>
     </>
 }

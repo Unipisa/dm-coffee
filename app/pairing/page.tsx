@@ -28,11 +28,15 @@ function Pairing({}) {
     const profile = useProfile()
     const [ removePairing, {}] = useMutation(REMOVE_PAIRING, {refetchQueries: ["GetProfile"]}) 
     if (profile?.code) {
-      return <div>Hai associato la tessera {profile.code}. <Button variant="alert" onClick={removePairing}>disaccoppia!</Button></div>
+      return <>
+        <h2 className="mt-2">Tessera associata</h2>
+        <div>Hai associato la tessera <span className="font-bold">{profile.code}</span>. <Button variant="alert" onClick={removePairing}>Rimuovi associazione</Button></div>
+      </>
     } else return <PairingRequest />
 }
   
 function PairingRequest({}) {
+    const profile = useProfile()
     const [submitPairing, {loading, error, data}] = useMutation(REQUEST_PAIRING,{
       onCompleted: completed})
     const [countdown, setCountdown] = useState(0)
@@ -43,12 +47,13 @@ function PairingRequest({}) {
       return <p>Passa la tessera sul lettore entro <b>{countdown}</b> secondi!</p>
     }
     return <>
-      <p>Non hai associato nessuna tessera.</p>
-      <p>Se hai una tessera e sei in sala caffé premi il pulsante {}
-      <Button onClick={() => submitPairing()}>
-        associazione tessera
-      </Button> 
-      </p>
+      <h2 className="mt-2">Associare una nuova tessera</h2>
+      <p>Puoi associare una nuova tessera al tuo account seguendo queste istruzioni:</p>
+      <ul>
+        <li className="ml-4 my-2">1. Recati in Sala Caffè</li>
+        <li className="ml-4 my-2">2. Premi il pulsante <Button onClick={() => submitPairing()}>associazione tessera</Button></li>
+        <li className="ml-4 my-2">3. Passa la tessera sul lettore per associarla.</li>
+      </ul>
     </>
   
     function completed(data: {card_request_pairing: number}) {

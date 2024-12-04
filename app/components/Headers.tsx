@@ -32,7 +32,7 @@ export default function Headers() {
         
     // see: https://tailwindui.com/components/application-ui/navigation/navbars
 
-    return <Disclosure as="nav" className="bg-gray-100 drop-shadow lg:rounded-b-lg lg:px-4 md:pb-3">
+    return <Disclosure as="nav" className="bg-gray-100 drop-shadow lg:rounded-b-lg lg:px-4 md:pb-3 mb-5">
         <div className="mx-1 p-3 lg:px-2 flex items-stretch justify-between space-x-3">
         <div className="flex justify-center sm:hidden">
             <div className="items-center my-2">

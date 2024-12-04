@@ -8,6 +8,11 @@ import Button from '../../components/Button'
 import Loading from '../../components/Loading'
 import Error from '../../components/Error'
 import { myDate } from '../../utils'
+import Table from '@/app/components/Table'
+import Thead from '@/app/components/Thead'
+import Th from '@/app/components/Th'
+import Tr from '@/app/components/Tr'
+import Td from '@/app/components/Td'
 
 const SAVE_TRANSACTION = gql`
   mutation SaveTransaction($_id: String, $timestamp: String, $email: String, $count: Int, $amountCents: Int, $description: String) {
@@ -131,17 +136,17 @@ function ImportWidget() {
             Carica dati &quot;valid&quot; dalla tabella
         </Button>}
         <div className="my-2"/>
-        <table>
-            <thead>
+        <Table>
+            <Thead>
                 <tr>
-                    <th>state</th>
-                    <th>timestamp</th>
-                    <th>count</th>
-                    <th>amountCents</th>
-                    <th>email</th>
-                    <th>description</th>
+                    <Th>state</Th>
+                    <Th>timestamp</Th>
+                    <Th>count</Th>
+                    <Th>amountCents</Th>
+                    <Th>email</Th>
+                    <Th>description</Th>
                     {Array.from({length: ncols}, (_,i) => i).map(i => 
-                        <th key={i}>
+                        <Th key={i}>
                             <select value={
                                 (Object.entries(mapping)
                                     .filter(([h,n]) => n===i)[0]||[''])[0]
@@ -156,25 +161,25 @@ function ImportWidget() {
                                     <option key={h} value={h}>{h}</option>
                                 )}
                             </select>
-                        </th>)}
+                        </Th>)}
                 </tr>
-            </thead>
+            </Thead>
             <tbody>
                 {table.map((row, i)=> ({row, i, parse: parseRow(mapping, row.cols, COST)})).map(item => 
-                    <tr key={item.i}>
-                        <td className={"bg-gray-300 " + (item.row.state || item.parse.error ? (item.row.state==="imported" ? "text-blue-500" : "text-red-500") : "text-green-500")}>{item.row.state || item.parse.error || 'valid'}</td>
-                        <td>{new Date(item.parse.timestamp||'').toLocaleString()}</td>
-                        <td>{item.parse.count}</td>
-                        <td>{item.parse.amountCents}</td>
-                        <td>{item.parse.email}</td>
-                        <td>{item.parse.description}</td>
+                    <Tr key={item.i}>
+                        <Td className={"bg-gray-300 " + (item.row.state || item.parse.error ? (item.row.state==="imported" ? "text-blue-500" : "text-red-500") : "text-green-500")}>{item.row.state || item.parse.error || 'valid'}</Td>
+                        <Td>{new Date(item.parse.timestamp||'').toLocaleString()}</Td>
+                        <Td>{item.parse.count}</Td>
+                        <Td>{item.parse.amountCents}</Td>
+                        <Td>{item.parse.email}</Td>
+                        <Td>{item.parse.description}</Td>
                         {item.row.cols.map((cell, j) => 
-                            <td className="bg-gray-300" key={j}>{cell}</td>
+                            <Td className="bg-gray-300" key={j}>{cell}</Td>
                         )}
-                    </tr>
+                    </Tr>
                 )}
             </tbody>
-        </table>
+        </Table>
     </>
 
     function importData(incoming_data: string) {

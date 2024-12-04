@@ -7,6 +7,11 @@ import Loading from '../../components/Loading'
 import Error from '../../components/Error'
 import Amount from '../../components/Amount'
 import {myDate, myTime} from '../../utils'
+import Table from '@/app/components/Table'
+import Thead from '@/app/components/Thead'
+import Th from '@/app/components/Th'
+import Tr from '@/app/components/Tr'
+import Td from '@/app/components/Td'
 
 export default function UsersPage({}) {
     return <Provider>
@@ -29,25 +34,25 @@ function Users() {
     if (loading) return <Loading />
     if (error) return <Error error={error}/>
     return <>
-      <table>
-        <thead>
+      <Table>
+        <Thead>
             <tr>
-                <th>email</th>
-                <th>#</th>
-                <th>€</th>
-                <th>data</th>
+                <Th className="text-left">email</Th>
+                <Th className="text-right">#</Th>
+                <Th className="text-right">€</Th>
+                <Th className="text-left">data</Th>
             </tr>
-        </thead>
+        </Thead>
         <tbody>
             {data.users.map((user: any, i: number) => 
-                <tr key={i}>
-                    <td>{user.email}</td>
-                    <td align="right">{user.count||""}</td>
-                    <td align="right"><Amount cents={user.creditCents}/></td>
-                    <td align="right">{myDate(user.timestamp)}</td>
-                </tr>
+                <Tr key={i}>
+                    <Td>{user.email}</Td>
+                    <Td className="text-right">{user.count||""}</Td>
+                    <Td className="text-right"><Amount cents={user.creditCents}/></Td>
+                    <Td className="text-left">{myDate(user.timestamp)}</Td>
+                </Tr>
             )}
         </tbody>
-      </table>
+      </Table>
     </>
 }
