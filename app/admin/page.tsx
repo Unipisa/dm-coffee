@@ -18,13 +18,33 @@ import Th from '../components/Th'
 export default function Admin({}) {
     return <Provider>
         <Balance />
-        <Transactions />
+        <TransactionYears />
     </Provider>
 }
 
+const GET_TRANSACTION_YEARS = gql`
+  query GetTransactionYears {
+    transactionYears
+  }`
+
+function TransactionYears() {
+  const {loading, error, data} = useQuery(GET_TRANSACTION_YEARS)
+  const [year, setYear] = useState(new Date().getFullYear())
+  if (loading) return <Loading />
+  if (error) return <Error error={error}/>
+  return <> 
+    <select onChange={evt => setYear(parseInt(evt.target.value))}>
+    {data.transactionYears.map((y: number) => 
+      <option key={y} value={y} selected={y===year}>{y}</option>
+    )}
+    </select>
+    <Transactions year={year}/>
+  </>
+}
+
 const GET_TRANSACTIONS = gql`
-  query GetTransactions {
-    transactions {
+  query GetTransactions($year: Int) {
+    transactions(year: $year) {
       _id 
       timestamp
       email
@@ -43,9 +63,11 @@ type Transaction = {
   description: string
 }
 
-function Transactions() {
+function Transactions({year}:{year: number}) {
     const [edit,setEdit] = useState(false)
-    const {loading, error, data} = useQuery(GET_TRANSACTIONS)
+    const {loading, error, data} = useQuery(GET_TRANSACTIONS, {
+      variables: {year}
+    })
     if (loading) return <Loading />
     if (error) return <Error error={error}/>
     return <>

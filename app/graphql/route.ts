@@ -86,7 +86,12 @@ const typeDefs = gql`
     """
     all transactions
     """
-    transactions: [Transaction]
+    transactions(year: Int): [Transaction]
+
+    """
+    years with transaction
+    """
+    transactionYears: [Int]
 
     """
     users and their credit
@@ -130,8 +135,8 @@ const typeDefs = gql`
     remove card pairing
     """
     card_remove_pairing: Boolean
-  }
-`
+  }`
+
 const resolvers = {
   Query: {
     cost: async(_: any, __: {}, context: Context) => {
@@ -200,16 +205,40 @@ const resolvers = {
       return result
     },
 
-    transactions: async(_: any, __: {}, context: Context) => {
+    transactionYears: async(_: any, __: {}, context: Context) => {
+      if (!context.user) throw new Error("not logged in")
+      const db = (await databasePromise).db
+      const account = db.collection("account")
+      const result = await account.aggregate([
+        { $group: { 
+          _id: { $year: "$timestamp" },
+        }},
+        { $project: { _id: 0, year: "$_id" } }
+      ]).toArray()
+      return result.map(x => x.year)
+    },
+
+    transactions: async(_: any, {year} : {year?: number}, context: Context) => {
       if (!context.user) throw new Error("not logged in")
       if (!config.ADMINS.split(',').includes(context.user.email)) throw new Error("not admin")
 
       const db = (await databasePromise).db
       const account = db.collection("account")
+
+       // Build the query object
+      const query: Record<string, any> = {};
+      if (year) {
+        query.timestamp = {
+          $gte: new Date(`${year}-01-01T00:00:00Z`),
+          $lt: new Date(`${year + 1}-01-01T00:00:00Z`),
+        };
+      }
+
       const result = await account
-        .find({})
+        .find(query)
         .sort({ timestamp: -1 })
-        .toArray()
+        .toArray();
+
       return result
     },
 
