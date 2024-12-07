@@ -55,7 +55,7 @@ function ProfileProvider({children}:{
     children: React.ReactNode
 }) {
     const { data, error } = useQuery(GET_PROFILE)
-    if (error) return <Error error={data.error} />
+    if (error) return <Error error={error} />
 
     return <profileContext.Provider value={data && data.profile || null}>
         {children}

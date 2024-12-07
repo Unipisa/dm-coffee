@@ -19,6 +19,7 @@ export default function Headers() {
 
     const navigation: { name: string, href: string, current: boolean }[] = [
         { name: 'caffè', href: '/', current: current_path === '/' },
+        { name: 'segnalazioni', href: '/notices', current: current_path === '/notices' },
     ]
 
     if (profile && !profile.code) {

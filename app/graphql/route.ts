@@ -55,6 +55,14 @@ const typeDefs = gql`
     count: Int  
   }
 
+  type Notice {
+    _id: String
+    timestamp: Timestamp
+    message: String
+    solved: Boolean
+    email: String
+  }
+
   type Query {
     profile: Profile
     
@@ -97,6 +105,11 @@ const typeDefs = gql`
     users and their credit
     """
     users: [User]
+
+    """
+    notices
+    """
+    notices: [Notice]
   }
 
   type Mutation {
@@ -135,6 +148,16 @@ const typeDefs = gql`
     remove card pairing
     """
     card_remove_pairing: Boolean
+
+    """
+    crea una segnalazione
+    """
+    createNotice(message: String!): Boolean
+
+    """
+    risolvi una segnalazione
+    """
+    solveNotice(_id: String!): Boolean
   }`
 
 const resolvers = {
@@ -259,8 +282,18 @@ const resolvers = {
       ]).toArray()
       // console.log("users:", result)
       return result
-    }
+    },
 
+    notices: async(_: any, __: {}, context: Context) => {
+      if (!context.user) throw new Error("not logged in")
+
+      const db = (await databasePromise).db
+      const result = await db.collection("notices").find({
+          solved: false
+        }, { sort: { timestamp: -1 }
+      }).toArray()
+      return result
+    },
   },
 
   Mutation: {
@@ -391,8 +424,35 @@ const resolvers = {
         await account.insertOne(data)
       }
       return true
-    }
+    },
 
+    createNotice: async(_: any, {message}: {message: string}, context: Context) => {
+      if (!context.user) throw new Error("not logged in")
+      const isAdmin = config.ADMINS.split(',').includes(context.user.email)
+      const USER_MESSAGES = ["fine grani"]
+      if (!isAdmin && !USER_MESSAGES.includes(message)) {
+        throw new Error(`not authorized to create notice with message: "${message}". Available messages: ${USER_MESSAGES.map(s=>`"${s}"`).join(', ')}`)
+      }
+      const db = (await databasePromise).db
+      const notices = db.collection("notices")
+      const result = await notices.insertOne({
+        timestamp: new Date(),
+        message,
+        solved: false,
+        email: context.user.email
+      })
+      return true
+    },
+
+    solveNotice: async(_: any, {_id}: {_id: string}, context: Context) => {
+      if (!context.user) throw new Error("not logged in")
+      if (!config.ADMINS.split(',').includes(context.user.email)) throw new Error("not admin")
+      const db = (await databasePromise).db
+      const notices = db.collection("notices")
+      const result = await notices.updateOne({ _id: new ObjectId(_id) }, 
+        { $set: { solved: true } })
+      return true
+    }
   },
 
   Timestamp: {
