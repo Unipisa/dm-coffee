@@ -359,7 +359,7 @@ const resolvers = {
           { $group: { _id: null, creditCents: { $sum: "$amountCents" } } }
         ]).toArray()
         const credit = result.length > 0 ? result[0].creditCents : 0
-        return [`${COST} cents charged`, `${user.email.split('@')[0]}: ${(credit/100).toFixed(2)}€`].join('\n')
+        return [ `${COST} cents charged`, `Balance:  ${(credit/100).toFixed(2)} EUR`, `${user.email.split('@')[0]}`].join('\n')
       } else {
         const CARD_PAIRING_MILLISECONDS = 1000*60
         // cerca utenti che hanno chiesto l'accoppiamento della tessera

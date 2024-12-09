@@ -20,12 +20,13 @@ extern "C" {
 #define API_URL "https://coffee.dm.unipi.it/graphql"
 #define LCD_TIMEOUT 5000
 
+#define COFFEE_STRING "   --- Coffee ---   "
 
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Instance of the class
 
 // set the LCD number of columns and rows
-int lcdColumns = 16;
-int lcdRows = 2;
+int lcdColumns = 20;
+int lcdRows = 4;
 
 // Last message displayed -- used to clear the screen if too old, 
 // we store one timestamp per line
@@ -34,54 +35,31 @@ bool dirtyScreen = false;
 
 // set LCD address, number of columns and rows
 // if you don't know your display address, run an I2C scanner sketch
-LiquidCrystal_I2C lcd(0x3F, lcdColumns, lcdRows);
-
-void setup() {
-  Serial.begin(9600);
-
-  SPI.begin(); // Init SPI bus
-  mfrc522.PCD_Init(); // Init MFRC522
-
-  Serial.println();
-  delay(4);
-  mfrc522.PCD_DumpVersionToSerial();
-
-  // initialize LCD
-  lcd.init();
-  // turn on LCD backlight                      
-  lcd.backlight();
-
-  if (! mfrc522.PCD_PerformSelfTest()) {
-    Serial.println("The self test of the MFRC522 module has not passed.");
-    lcdPrintLine(1, "NFC test failed!");
-  }
-
-  lcdPrintLine(0, " --- Coffee --- ");
-  lcdPrintLine(1, "WiFi: connecting");
-  
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) {
-    lcdPrintLine(1, "WiFi: connecting");
-    delay(2000);    
-  }
-  lcdPrintLine(1, "WiFi: ok");
-
-  pinMode(D0, OUTPUT);
-}
+LiquidCrystal_I2C lcd(0x27, lcdColumns, lcdRows);
 
 void lcdPrintLines(String x) {
   const char *y = x.c_str();
-  const char *newline = strchr(y, '\n');
-  if (! y) {
-    lcdPrintLine(0, x);
-    lcdPrintLine(1, "");
-  }
-  else {
-    int offset = newline - y;
-    lcdPrintLine(0, x.substring(0, offset));
-    lcdPrintLine(1, x.substring(offset + 1));
+  int line = 1;
+  char buf[21];
+
+  while (line < 4 && y) {
+    const char *newline = strchr(y, '\n');
+    if (! newline) {
+      strncpy(buf, y, 20); buf[20] = '\0';
+      lcdPrintLine(line, String(buf));
+      break;
+    }
+    else {
+      strncpy(buf, y, newline - y);
+      buf[newline - y] = '\0';
+      lcdPrintLine(line, String(buf));
+      y = newline + 1;
+    }
+
+    line++;
   }
 }
+
 
 void lcdPrintLine(int line, String x) {
   Serial.println(String("LCD: Printing on line ") + line);
@@ -105,9 +83,11 @@ void cleanupScreen() {
     for (int j = 0; j < lcdRows; j++) {    
       lcd.setCursor(0, j);
       if (j == 0)
-        lcd.print(" --- Coffee --- ");
+        lcd.print(COFFEE_STRING);
       if (j == 1)
-        lcd.print("[Scan the badge]");
+        lcd.print(" [ Scan the badge ] ");
+      if (j > 1)
+        lcd.print("                    ");
     }
 
     dirtyScreen = false;
@@ -116,12 +96,56 @@ void cleanupScreen() {
   
 }
 
+void connectWiFi() {
+  if (WiFi.status() == WL_CONNECTED)
+    return;
+
+  lcd.clear();
+  lcdPrintLine(0, COFFEE_STRING);
+  lcdPrintLine(1, "> Connecting to WiFi");
+
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  while (WiFi.status() != WL_CONNECTED) {
+    lcdPrintLine(1, "> Connecting to WiFi");
+    delay(2000);
+  }
+  lcdPrintLine(1, "> Connected           ");
+  delay(1000);
+}
+
+void setup() {
+  Serial.begin(9600);
+
+  SPI.begin(); // Init SPI bus
+  mfrc522.PCD_Init(); // Init MFRC522
+
+  Serial.println();
+  delay(4);
+  mfrc522.PCD_DumpVersionToSerial();
+
+  // initialize LCD
+  lcd.init();
+  // turn on LCD backlight                      
+  lcd.backlight();
+  lcdPrintLine(0, COFFEE_STRING);
+
+  if (! mfrc522.PCD_PerformSelfTest()) {
+    Serial.println("The self test of the MFRC522 module has not passed.");
+    lcdPrintLine(1, "NFC test failed!");
+  }
+
+  pinMode(D0, OUTPUT);
+}
+
 void loop() {
+
+  connectWiFi();
 
   bool gotNewCard = mfrc522.PICC_IsNewCardPresent();
   bool gotSerial = mfrc522.PICC_ReadCardSerial();
 
   if (gotNewCard && gotSerial) {
+    lcd.clear();
     lcdPrintLine(0, "> [wait]");
     WiFiClientSecure client;
     client.setInsecure();
@@ -140,12 +164,14 @@ void loop() {
     Serial.println(data);
 
     String fullUrl = API_URL;
-    lcdPrintLine(1, "Requesting ...");
+    lcdPrintLine(1, "Registering 1 coffee");
+    lcdPrintLine(2, "     [ ...... ]     ");
 
     if (https.begin(client, fullUrl)) {
       https.addHeader("Content-Type", "application/json");
       https.addHeader("Authorization", SECRET_TOKEN);
       int httpCode = https.POST(data);
+      Serial.println("Response received");
       if (httpCode > 0) {
         JsonDocument doc;
         String body = https.getString();
@@ -154,6 +180,8 @@ void loop() {
         String response = doc["data"]["card"];
 
         // We need to split the string finding the newline, if any
+        lcd.clear();
+        lcdPrintLine(0, COFFEE_STRING);
         lcdPrintLines(response);
 
         tone(D0, 6000, 200);
