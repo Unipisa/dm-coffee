@@ -367,7 +367,7 @@ const resolvers = {
           { $match: { scan_request_limit_timestamp: { $gt: new Date(new Date().getTime() - CARD_PAIRING_MILLISECONDS) } } }
         ]).toArray()
         if (pairings.length === 0) {
-          return ["unknown badge","> coffee.dm.unipi.it"].join('\n') 
+          return ["X Unknown badge!", "Go to the website:", " coffee.dm.unipi.it"].join('\n') 
         } else if (!code) {
           return ["invalid badge"].join('\n')
         } else if (pairings.length === 1) {
