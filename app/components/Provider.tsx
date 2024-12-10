@@ -40,16 +40,24 @@ function Auth() {
     return null
 }
 
+type Profile = {
+    email: string
+    admin: boolean
+    code: string
+    authorized: boolean
+}
+
 const GET_PROFILE = gql`
   query GetProfile {
     profile {
       email
       admin
       code
+      authorized
     }
   }`
 
-const profileContext = createContext<{email:string,admin:boolean,code:string}|null>(null)
+const profileContext = createContext<Profile|null>(null)
 
 function ProfileProvider({children}:{
     children: React.ReactNode

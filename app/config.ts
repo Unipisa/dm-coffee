@@ -19,7 +19,8 @@ const config = singleton || (() => {
         // Changing them here will have no effect.
         NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
         NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-        UNSAFE_AUTOMATIC_LOGIN_EMAIL: process.env.UNSAFE_AUTOMATIC_LOGIN_EMAIL
+        UNSAFE_AUTOMATIC_LOGIN_EMAIL: process.env.UNSAFE_AUTOMATIC_LOGIN_EMAIL,
+        PERMITTED_EMAIL_REGEX: process.env.PERMITTED_EMAIL_REGEX || '.*',
     }
 
     console.log(` ______   _______         _______  _______  _______  _______  _______  _______ 

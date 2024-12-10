@@ -18,7 +18,7 @@ export default function CoffeeForm() {
   return <form>
     <div className="grid gap-6 my-6 md:grid-cols-1">
       <div className='flex justify-center space-x-2'>
-        <Button variant='secondary' disabled={count <= 1}onClick={() => setCount(count => count - 1)}>
+        <Button variant='secondary' disabled={count <= 1} onClick={() => setCount(count => count - 1)}>
           -
         </Button>
       <Button onClick={() => submitCoffee({ variables: { count } })}>

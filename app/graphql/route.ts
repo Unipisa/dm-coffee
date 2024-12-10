@@ -7,16 +7,62 @@ import type { NextRequest } from "next/server"
 import { ObjectId } from 'mongodb'
 
 import config from '../config'
+import { isPermittedEmail } from '../utils'
+
+type User = {
+  email: string
+  name: string
+  picture: string
+  id: string
+}
+
+type UserWithAdminField = User & { admin: boolean }
 
 type Context = {
   req: NextRequest
   res: Response|undefined
-  user?: {
-    email: string
-    name: string
-    picture: string
-    id: string
+  user?: User
+}
+
+/**
+ * @param context 
+ * @returns user object if authenticated 
+ * @throws error if not authenticated
+ */
+function requireAuthenticatedUser(context: Context): UserWithAdminField {
+  const user = context?.user
+  if (!user) throw new Error("not logged in")
+  return {
+    ...user,
+    admin: config.ADMINS.split(',').includes(user.email)
   }
+}
+
+/**
+ * @param context 
+ * @returns user object if authenticated and email is permitted by configuration
+ * @throws error if not authenticated or email is not permitted
+ */
+function requirePermittedUser(context: Context): UserWithAdminField {
+  const user = requireAuthenticatedUser(context)
+  if (!isPermittedEmail(user?.email)) throw new Error("email not permitted")
+  return user
+}
+
+/**
+ * @param context 
+ * @returns user object if authenticated and email is in the list of admins
+ * @throws error if not authenticated or email is not in the list of admins
+ */
+function requireAdminUser(context: Context): User {
+  const authorization = context.req.headers.get('authorization')
+  if (authorization && !Array.isArray(authorization) && config.ADMIN_SECRET_TOKENS.split(',').includes(authorization)) {
+    return { email: 'admin', name: 'request with authorization token', picture: '', id: 'unknown_admin' }
+  }
+
+  const user = requireAuthenticatedUser(context)
+  if (!user.admin) throw new Error("not admin")
+  return user
 }
 
 const typeDefs = gql`
@@ -25,6 +71,7 @@ const typeDefs = gql`
   type Profile {
     email: String
     admin: Boolean
+    authorized: Boolean
     code: String
   }
 
@@ -177,19 +224,17 @@ const resolvers = {
       if (!context.user) return 
       const users = (await databasePromise).db.collection('users')
       const user = await users.findOne({email: context.user.email})
-      if (config.ADMINS.split(',').includes(context.user.email)) {
-        return { ...user, admin: true}
-      } else {
-        return {...user}
-      }
+      const admin = config.ADMINS.split(',').includes(context.user.email)
+      const authorized = isPermittedEmail(context.user.email)
+      return {...user, admin, authorized}
     },
 
     credit: async(_: any, __: {}, context: Context) => {
-      if (!context.user) throw new Error("not logged in")
+      const user = requireAuthenticatedUser(context)
       const db = (await databasePromise).db
       const account = db.collection("account")
       const result = await account.aggregate([
-        { $match: { email: context.user.email } },
+        { $match: { email: user.email } },
         { $group: { 
           _id: null, 
           creditCents: { $sum: "$amountCents" },
@@ -218,18 +263,18 @@ const resolvers = {
     },
 
     myTransactions: async(_: any, __: {}, context: Context) => {
-      if (!context.user) throw new Error("not logged in")
+      const user = requireAuthenticatedUser(context)
       const db = (await databasePromise).db
       const account = db.collection("account")
       const result = await account
-        .find({ email: context.user.email })
+        .find({ email: user.email })
         .sort({ timestamp: -1 })
         .toArray()
       return result
     },
 
     transactionYears: async(_: any, __: {}, context: Context) => {
-      if (!context.user) throw new Error("not logged in")
+      const user = requireAuthenticatedUser(context)
       const db = (await databasePromise).db
       const account = db.collection("account")
       const result = await account.aggregate([
@@ -242,8 +287,7 @@ const resolvers = {
     },
 
     transactions: async(_: any, {year} : {year?: number}, context: Context) => {
-      if (!context.user) throw new Error("not logged in")
-      if (!config.ADMINS.split(',').includes(context.user.email)) throw new Error("not admin")
+      const user = requireAdminUser(context)
 
       const db = (await databasePromise).db
       const account = db.collection("account")
@@ -266,8 +310,7 @@ const resolvers = {
     },
 
     users: async(_: any, __: {}, context: Context) => {
-      if (!context.user) throw new Error("not logged in")
-      if (!config.ADMINS.split(',').includes(context.user.email)) throw new Error("not admin")
+      const user = requireAdminUser(context)
 
       const db = (await databasePromise).db
       const result = await db.collection("account").aggregate([
@@ -285,7 +328,7 @@ const resolvers = {
     },
 
     notices: async(_: any, __: {}, context: Context) => {
-      if (!context.user) throw new Error("not logged in")
+      const user = requireAuthenticatedUser(context)
 
       const db = (await databasePromise).db
       const result = await db.collection("notices").find({
@@ -298,16 +341,7 @@ const resolvers = {
 
   Mutation: {
     setCost: async(_: any, {cents}: {cents: number}, context: Context) => {
-      // check if authorization bearer token is valid
-      const authorization = context.req.headers.get('authorization')
-
-      if (!context.user?.email || !config.ADMINS.split(',').includes(context.user.email)) {
-        console.log("invalid authorization", authorization)
-        // no token provided, check credentials
-        if (!context.user) throw new Error("not logged in")
-        throw new Error("not admin")
-      }
-
+      requireAdminUser(context)
       const db = (await databasePromise).db
       const cost = db.collection("cost")
       await cost.insertOne({ timestamp: new Date(), cents })
@@ -315,35 +349,37 @@ const resolvers = {
     },
 
     card_request_pairing: async(_: any, __: {}, context: Context) => {
-      if (!context.user) throw new Error("not logged in")
+      const user = requirePermittedUser(context)
       const db = (await databasePromise).db
       const users = db.collection("users")
       const MILLISECONDS = 1000*60
       const timestamp = new Date(new Date().getTime() + MILLISECONDS)
-      await users.updateOne({ email: context.user.email },
+      await users.updateOne({ email: user.email },
         { $set: { scan_request_limit_timestamp: timestamp } })
       return MILLISECONDS
     },
 
     card_remove_pairing: async(_: any, __: {}, context: Context) => {
-      if (!context.user) throw new Error("not logged in")
+      const user = requireAuthenticatedUser(context)
       const users = (await databasePromise).db.collection("users")
-      await users.updateOne({email: context.user.email},
+      await users.updateOne({email: user.email},
         { $set: { code: null }})
       return true 
     },
 
     card: async(_: any, {code}: {code: string}, context: Context) => {
-      const authorization = context.req.headers.get('authorization')
-
-      // check if authorization bearer token is valid
-      if (!authorization || Array.isArray(authorization) || !config.CARD_SECRET_TOKENS.split(',').includes(authorization)) {
-        throw new Error("not authorized")
-      }
+      requireAdminUser(context)
       const db = (await databasePromise).db
       const users = db.collection("users")
       const user = await users.findOne({ code })
       if (user) {
+        /**
+         * ATTENZIONE: un utente che e' riuscito a collegare la tessera
+         * e' autorizzato anche se il suo email non corrisponde alla
+         * lista degli utenti autorizzati.
+         * Questo dovrebbe andare bene perché l'utente non può collegare la tessera
+         * se non è autorizzato.
+         */
         const COST = await getCost()
         const transactions = db.collection("account")
         await transactions.insertOne({
@@ -384,7 +420,7 @@ const resolvers = {
     },
 
     coffee: async(_: any, {count}: {count: number}, context: Context) => {
-      if (!context.user) throw new Error("not logged in")
+      const user = requirePermittedUser(context)
       const db = (await databasePromise).db
       console.log("mutation context:", context)
       const account = db.collection("account")
@@ -393,22 +429,14 @@ const resolvers = {
         count: count,
         amountCents: -count * COST,
         description: "coffee",
-        email: context.user.email,
+        email: user.email,
         timestamp: new Date()
       })
       return true
     },
 
     transaction: async(_: any, { _id, timestamp, email, count, amountCents, description }: { _id: string, timestamp: string, email: string, count: number, amountCents: number, description: string }, context: Context) => {
-      // check if authorization bearer token is valid
-      const authorization = context.req.headers.get('authorization')
-
-      if (!authorization || Array.isArray(authorization) || !config.ADMIN_SECRET_TOKENS.split(',').includes(authorization)) {
-        console.log("invalid authorization", authorization)
-        // no token provided, check credentials
-        if (!context.user) throw new Error("not logged in")
-        if (!config.ADMINS.split(',').includes(context.user.email)) throw new Error("not admin")
-      }
+      requireAdminUser(context)
 
       const db = (await databasePromise).db
       const account = db.collection("account")
@@ -427,8 +455,8 @@ const resolvers = {
     },
 
     createNotice: async(_: any, {message}: {message: string}, context: Context) => {
-      if (!context.user) throw new Error("not logged in")
-      const isAdmin = config.ADMINS.split(',').includes(context.user.email)
+      const user = requirePermittedUser(context)
+      const isAdmin = user.admin
       const USER_MESSAGES = ["fine grani"]
       if (!isAdmin && !USER_MESSAGES.includes(message)) {
         throw new Error(`not authorized to create notice with message: "${message}". Available messages: ${USER_MESSAGES.map(s=>`"${s}"`).join(', ')}`)
@@ -439,14 +467,13 @@ const resolvers = {
         timestamp: new Date(),
         message,
         solved: false,
-        email: context.user.email
+        email: user.email
       })
       return true
     },
 
     solveNotice: async(_: any, {_id}: {_id: string}, context: Context) => {
-      if (!context.user) throw new Error("not logged in")
-      if (!config.ADMINS.split(',').includes(context.user.email)) throw new Error("not admin")
+      requireAdminUser(context)
       const db = (await databasePromise).db
       const notices = db.collection("notices")
       const result = await notices.updateOne({ _id: new ObjectId(_id) }, 

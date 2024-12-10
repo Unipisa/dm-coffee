@@ -6,6 +6,9 @@ import Credit from './components/Credit'
 import Balance from './components/Balance'
 import Transactions from './components/Transactions'
 import CoffeeForm from './components/CoffeeForm'
+import { useProfile } from './components/Provider'
+
+import Error from './components/Error'
 
 export default function Home() {
   return <Provider>
@@ -14,7 +17,9 @@ export default function Home() {
 }
 
 function Dashboard() {
+  const profile = useProfile()
   return <main>
+    { profile && !profile.authorized && <Error error={`email ${profile.email} non autorizzato`} /> }
     <CoffeeForm />
     <div className='flex justify-between'>
       <Credit />
