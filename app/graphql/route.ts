@@ -65,6 +65,15 @@ function requireAdminUser(context: Context): User {
   return user
 }
 
+function requireCardAuthentication(context: Context): User {
+  const authorization = context.req.headers.get('authorization')
+  if (authorization && !Array.isArray(authorization) && config.CARD_SECRET_TOKENS.split(',').includes(authorization)) {
+    return { email: 'card', name: 'request with authorization token', picture: '', id: 'unknown_card' }
+  }
+  throw new Error("not card user")
+}
+
+
 const typeDefs = gql`
   scalar Timestamp
 
@@ -368,7 +377,7 @@ const resolvers = {
     },
 
     card: async(_: any, {code}: {code: string}, context: Context) => {
-      requireAdminUser(context)
+      requireCardAuthentication(context)
       const db = (await databasePromise).db
       const users = db.collection("users")
       const user = await users.findOne({ code })

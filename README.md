@@ -29,8 +29,8 @@ This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-opti
 per simulare il passaggio della tessera `1234` bisogna mettere un token 
 segreto nella variabile d'ambiente `CARD_SECRET_TOKENS` (si possono inserire più tokens separati da una virgola) e poi si può dare il comando
 ```bash
-CODE=codice_tessera
-CARD_SECRET_TOKEN=codice_segreto
+export CODE=codice_tessera
+export CARD_SECRET_TOKEN=codice_segreto
 curl 'http://localhost:3000/graphql' -H "Authorization: ${CARD_SECRET_TOKEN}" -H 'content-type: application/json' --data-raw '{"operationName":"Card","variables":{"code":"'"${CODE}"'"},"query":"mutation Card($code: String!) {\n  card(code: $code)\n}"}'
 ```
 
