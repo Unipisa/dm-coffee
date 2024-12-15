@@ -30,8 +30,8 @@ per simulare il passaggio della tessera `1234` bisogna mettere un token
 segreto nella variabile d'ambiente `CARD_SECRET_TOKENS` (si possono inserire più tokens separati da una virgola) e poi si può dare il comando
 ```bash
 export CODE=codice_tessera
-export CARD_SECRET_TOKEN=codice_segreto
-curl 'http://localhost:3000/graphql' -H "Authorization: ${CARD_SECRET_TOKEN}" -H 'content-type: application/json' --data-raw '{"operationName":"Card","variables":{"code":"'"${CODE}"'"},"query":"mutation Card($code: String!) {\n  card(code: $code)\n}"}'
+export CARD_SECRET_TOKENS=codice_segreto
+curl 'http://localhost:3000/graphql' -H "Authorization: ${CARD_SECRET_TOKENS}" -H 'content-type: application/json' --data-raw '{"operationName":"Card","variables":{"code":"'"${CODE}"'"},"query":"mutation Card($code: String!) {\n  card(code: $code)\n}"}'
 ```
 
 ## inserting a transaction with an API call

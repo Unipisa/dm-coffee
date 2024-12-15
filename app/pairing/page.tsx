@@ -30,7 +30,9 @@ function Pairing({}) {
     if (profile?.code) {
       return <>
         <h2 className="mt-2">Tessera associata</h2>
-        <div>Hai associato la tessera <span className="font-bold">{profile.code}</span>. <Button variant="alert" onClick={removePairing}>Rimuovi associazione</Button></div>
+        <div>Codice tessera: <span className="font-bold">{profile.code}</span>. 
+        <br />
+        <Button variant="alert" onClick={removePairing}>Rimuovi associazione</Button></div>
       </>
     } else return <PairingRequest />
 }

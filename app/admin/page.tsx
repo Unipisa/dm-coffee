@@ -51,6 +51,7 @@ const GET_TRANSACTIONS = gql`
       count
       amountCents
       description
+      code
     }
   }`
 
@@ -60,7 +61,8 @@ type Transaction = {
   email: string,
   count: number,
   amountCents: number,
-  description: string
+  description: string,
+  code: string,
 }
 
 function Transactions({year}:{year: number}) {
@@ -98,6 +100,9 @@ function Transactions({year}:{year: number}) {
           <Th className="text-left">
             description
           </Th>
+          {!edit && <Th className="tex-left">
+              card
+          </Th>}
         </tr>
       </Thead>
       <tbody>
@@ -152,6 +157,7 @@ function TransactionRow({transaction, edit}:{
     <Td>{transaction && !editing ?originalDescription
     :<input type="text" placeholder="description" value={newDescription} onChange={e => setDescription(e.target.value)} />}
     </Td>
+    {!edit && <Td>{transaction?.code}</Td> }
     {edit && 
       <Td>{modified && 
         <button className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
