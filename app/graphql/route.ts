@@ -8,71 +8,8 @@ import { ObjectId } from 'mongodb'
 
 import config from '../config'
 import { isPermittedEmail } from '../utils'
-
-type User = {
-  email: string
-  name: string
-  picture: string
-  id: string
-}
-
-type UserWithAdminField = User & { admin: boolean }
-
-type Context = {
-  req: NextRequest
-  res: Response|undefined
-  user?: User
-}
-
-/**
- * @param context 
- * @returns user object if authenticated 
- * @throws error if not authenticated
- */
-function requireAuthenticatedUser(context: Context): UserWithAdminField {
-  const user = context?.user
-  if (!user) throw new Error("not logged in")
-  return {
-    ...user,
-    admin: config.ADMINS.split(',').includes(user.email)
-  }
-}
-
-/**
- * @param context 
- * @returns user object if authenticated and email is permitted by configuration
- * @throws error if not authenticated or email is not permitted
- */
-function requirePermittedUser(context: Context): UserWithAdminField {
-  const user = requireAuthenticatedUser(context)
-  if (!isPermittedEmail(user?.email)) throw new Error("email not permitted")
-  return user
-}
-
-/**
- * @param context 
- * @returns user object if authenticated and email is in the list of admins
- * @throws error if not authenticated or email is not in the list of admins
- */
-function requireAdminUser(context: Context): User {
-  const authorization = context.req.headers.get('authorization')
-  if (authorization && !Array.isArray(authorization) && config.ADMIN_SECRET_TOKENS.split(',').includes(authorization)) {
-    return { email: 'admin', name: 'request with authorization token', picture: '', id: 'unknown_admin' }
-  }
-
-  const user = requireAuthenticatedUser(context)
-  if (!user.admin) throw new Error("not admin")
-  return user
-}
-
-function requireCardAuthentication(context: Context): User {
-  const authorization = context.req.headers.get('authorization')
-  if (authorization && !Array.isArray(authorization) && config.CARD_SECRET_TOKENS.split(',').includes(authorization)) {
-    return { email: 'card', name: 'request with authorization token', picture: '', id: 'unknown_card' }
-  }
-  throw new Error("not card user")
-}
-
+import { Context } from './types'
+import { requireAdminUser, requireAuthenticatedUser, requirePermittedUser, requireCardAuthentication } from './permissions'
 
 const typeDefs = gql`
   scalar Timestamp
@@ -104,6 +41,8 @@ const typeDefs = gql`
     creditCents: Int
     count: Int
     timestamp: Timestamp
+    admin: Boolean
+    _id: String
   }
 
   type Balance {
@@ -117,6 +56,10 @@ const typeDefs = gql`
     message: String
     solved: Boolean
     email: String
+  }
+
+  input UpdateUserInput {
+    admin: Boolean
   }
 
   type Query {
@@ -158,9 +101,9 @@ const typeDefs = gql`
     transactionYears: [Int]
 
     """
-    users and their credit
+    transactions aggregated by users
     """
-    users: [User]
+    userTransactions: [User]
 
     """
     notices
@@ -214,6 +157,11 @@ const typeDefs = gql`
     risolvi una segnalazione
     """
     solveNotice(_id: String!): Boolean
+
+    """ 
+    modifica il flag admin di un utente
+    """
+    updateUser(_id: String!, data: UpdateUserInput): Boolean
   }`
 
 const resolvers = {
@@ -318,8 +266,8 @@ const resolvers = {
       return result
     },
 
-    users: async(_: any, __: {}, context: Context) => {
-      const user = requireAdminUser(context)
+    userTransactions: async(_: any, __: {}, context: Context) => {
+      requireAdminUser(context)
 
       const db = (await databasePromise).db
       const result = await db.collection("account").aggregate([
@@ -330,9 +278,24 @@ const resolvers = {
           timestamp: { $max: "$timestamp" },
         }},
         { $project: { _id: 0, email: "$_id", creditCents: 1, count: 1, timestamp: 1 } },
-        { $sort: { email: 1 } }
+        { $sort: { email: 1 } },
+        { $lookup: { 
+            from: "users", 
+            localField: "email", 
+            foreignField: "email", 
+            as: "user" 
+          } 
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true} },
+        { $project: { 
+          _id: "$user._id",
+          email: 1, 
+          creditCents: 1, 
+          count: 1, 
+          timestamp: 1, 
+          admin: "$user.admin" } }
       ]).toArray()
-      // console.log("users:", result)
+      console.log(JSON.stringify(result))
       return result
     },
 
@@ -488,6 +451,15 @@ const resolvers = {
       const result = await notices.updateOne({ _id: new ObjectId(_id) }, 
         { $set: { solved: true } })
       return true
+    },
+
+    updateUser: async(_:any, { _id, data }: { _id: string, data: { admin: boolean } }, context: Context) => {
+      requireAdminUser(context)
+      const db = (await databasePromise).db
+      const users = db.collection("users")
+      const result = await users.updateOne({ _id: new ObjectId(_id) }, 
+        { $set: data })
+      return true
     }
   },
 
@@ -517,6 +489,8 @@ const handler = startServerAndCreateNextHandler<NextRequest,Context>(server, {
       const ctx: Context = { req, res }
       const token = await getToken({ req })
       if (!token || !token.email) return ctx // not logged in
+      const db = (await databasePromise).db
+      const user = await db.collection("users").findOne({ email: token.email })
       return { 
         ...ctx,
         user: {
@@ -524,6 +498,7 @@ const handler = startServerAndCreateNextHandler<NextRequest,Context>(server, {
             name: token.name || '',
             picture: token.picture || '',
             id: token.sub || '',
+            admin: user?.admin || false
         }
       }
     }

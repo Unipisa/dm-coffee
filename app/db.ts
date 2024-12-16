@@ -55,5 +55,14 @@ async function get_db(): Promise<Database> {
 }
 
 async function initialize(db: Db) {
+  if (config.ADMINS) {
+    const emails = config.ADMINS.split(',')
+    console.log('making admins:', emails)
+    await db.collection('users').updateMany(
+      { email: { $in: emails } },
+      { $set: { admin: true } }
+    )
+  }
 }
+    
 
