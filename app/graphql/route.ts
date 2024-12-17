@@ -36,13 +36,17 @@ const typeDefs = gql`
     timestamp: Timestamp
   }
 
-  type User {
+  type UserTransactions {
     email: String
     creditCents: Int
     count: Int
     timestamp: Timestamp
-    admin: Boolean
+  }
+
+  type User {
     _id: String
+    email: String,
+    admin: Boolean,
   }
 
   type Balance {
@@ -103,7 +107,12 @@ const typeDefs = gql`
     """
     transactions aggregated by users
     """
-    userTransactions: [User]
+    userTransactions: [UserTransactions]
+
+    """
+    users
+    """
+    users: [User]
 
     """
     notices
@@ -278,24 +287,17 @@ const resolvers = {
           timestamp: { $max: "$timestamp" },
         }},
         { $project: { _id: 0, email: "$_id", creditCents: 1, count: 1, timestamp: 1 } },
-        { $sort: { email: 1 } },
-        { $lookup: { 
-            from: "users", 
-            localField: "email", 
-            foreignField: "email", 
-            as: "user" 
-          } 
-        },
-        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true} },
-        { $project: { 
-          _id: "$user._id",
-          email: 1, 
-          creditCents: 1, 
-          count: 1, 
-          timestamp: 1, 
-          admin: "$user.admin" } }
+        { $sort: { email: 1 } }
       ]).toArray()
-      console.log(JSON.stringify(result))
+      // console.log(JSON.stringify(result))
+      return result
+    },
+
+    users: async(_: any,__: {}, context: Context) => {
+      requireAdminUser(context)
+      const db = (await databasePromise).db
+      const users = db.collection("users")
+      const result = await users.find({}).toArray()
       return result
     },
 

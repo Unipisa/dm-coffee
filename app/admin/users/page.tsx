@@ -27,16 +27,39 @@ query GetUserTransactions {
     creditCents
     timestamp
     count
-    _id
-    admin
   }
 }`
 
+const GET_USERS = gql`
+query GetUsers {
+  users {
+    _id
+    email
+    admin
+    }
+}`
+
 function Users() {
-    const {loading, error, data} = useQuery(GET_USER_TRANSACTIONS)
+    const {loading: loadingTransactions, error: errorTransactions, data: dataTransactions} = useQuery(GET_USER_TRANSACTIONS)
+    const {loading: loadingUsers, error: errorUsers, data: dataUsers} = useQuery(GET_USERS)
     const [edit, setEdit] = useState(false)
-    if (loading) return <Loading />
-    if (error) return <Error error={error}/>
+    if (loadingTransactions || loadingUsers) return <Loading />
+    if (errorTransactions) return <Error error={errorTransactions}/>
+    if (errorUsers) return <Error error={errorUsers}/>
+
+    const userDict = dataUsers.users.reduce((acc: any, user: any) => {
+        acc[user.email] = {user}
+        return acc
+    } , {})
+
+    dataTransactions.userTransactions.forEach((transactions: any) => {
+        if (userDict[transactions.email]) {
+            userDict[transactions.email].transactions = transactions
+        } else {
+            userDict[transactions.email] = {transactions}
+        }
+    })
+
     return <>
       {edit
         ? <a className="ml-auto" href="#" onClick={() => setEdit(false)}>
@@ -52,20 +75,20 @@ function Users() {
                 <Th className="text-left">email</Th>
                 <Th className="text-right">#</Th>
                 <Th className="text-right">€</Th>
-                <Th className="text-left">data</Th>
+                <Th className="text-right">data</Th>
                 <Th className="text-left">admin</Th>
             </tr>
         </Thead>
         <tbody>
-            {data.userTransactions.map((user: any, i: number) => 
-                <Tr key={i}>
-                    <Td>{user.email}</Td>
-                    <Td className="text-right">{user.count||""}</Td>
-                    <Td className="text-right"><Amount cents={user.creditCents}/></Td>
-                    <Td className="text-left">{myDate(user.timestamp)}</Td>
+            {Object.keys(userDict).sort().map(email => ({email, ...userDict[email]})).map(({ email, user, transactions }: any) => 
+                <Tr key={email}>
+                    <Td>{email}</Td>
+                    <Td className="text-right">{transactions?.count||""}</Td>
+                    <Td className="text-right">{transactions && <Amount cents={transactions.creditCents}/>}</Td>
+                    <Td className="text-left">{transactions && myDate(transactions.timestamp)}</Td>
                     <Td className="text-left">
-                      {!edit && user.admin?"✅":""}
-                      {edit && user._id && <UpdateAdminButton user={user} />}
+                      {!edit && user?.admin?"✅":""}
+                      {edit && user?._id && <UpdateAdminButton user={user} />}
                     </Td>
                 </Tr>
             )}
@@ -81,7 +104,7 @@ mutation UpdateUser($_id: String!, $data: UpdateUserInput) {
 
 function UpdateAdminButton({user}:{user: {_id: string, admin: Boolean}}) {
     const [updateUser, {data, loading, error}] = useMutation(UPDATE_USER, {
-        refetchQueries: ["GetUserTransactions"]
+        refetchQueries: ["GetUsers"]
     })
     return user.admin 
       ? <Button onClick={() => updateUser({variables: {_id: user._id, data: {admin: false}}})}>
