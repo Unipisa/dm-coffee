@@ -53,6 +53,7 @@ function Users() {
                 <Th className="text-right">#</Th>
                 <Th className="text-right">€</Th>
                 <Th className="text-left">data</Th>
+                <Th className="text-left">authorized</Th>
                 <Th className="text-left">admin</Th>
             </tr>
         </Thead>
@@ -63,6 +64,10 @@ function Users() {
                     <Td className="text-right">{user.count||""}</Td>
                     <Td className="text-right"><Amount cents={user.creditCents}/></Td>
                     <Td className="text-left">{myDate(user.timestamp)}</Td>
+                    <Td className="text-left">
+                      {!edit && user.authorized?"✅":""}
+                      {edit && user._id && <UpdateAuthorizedButton user={user} />}
+                    </Td>
                     <Td className="text-left">
                       {!edit && user.admin?"✅":""}
                       {edit && user._id && <UpdateAdminButton user={user} />}
@@ -80,14 +85,27 @@ mutation UpdateUser($_id: String!, $data: UpdateUserInput) {
 }`
 
 function UpdateAdminButton({user}:{user: {_id: string, admin: Boolean}}) {
-    const [updateUser, {data, loading, error}] = useMutation(UPDATE_USER, {
-        refetchQueries: ["GetUserTransactions"]
-    })
-    return user.admin 
-      ? <Button onClick={() => updateUser({variables: {_id: user._id, data: {admin: false}}})}>
-        remove admin
-      </Button> 
-      :<Button onClick={() => updateUser({variables: {_id: user._id, data: {admin: true}}})}>
-        make admin
-      </Button>
+  const [updateUser, {data, loading, error}] = useMutation(UPDATE_USER, {
+      refetchQueries: ["GetUserTransactions"]
+  })
+  return user.admin 
+    ? <Button onClick={() => updateUser({variables: {_id: user._id, data: {admin: false}}})}>
+      remove admin
+    </Button> 
+    :<Button onClick={() => updateUser({variables: {_id: user._id, data: {admin: true}}})}>
+      make admin
+    </Button>
+}
+
+function UpdateAuthorizedButton({user}:{user: {_id: string, authorized: Boolean}}) {
+  const [updateUser, {data, loading, error}] = useMutation(UPDATE_USER, {
+      refetchQueries: ["GetUserTransactions"]
+  })
+  return user.authorized 
+    ? <Button onClick={() => updateUser({variables: {_id: user._id, data: {authorized: false}}})}>
+      remove admin
+    </Button> 
+    :<Button onClick={() => updateUser({variables: {_id: user._id, data: {authorized: true}}})}>
+      make admin
+    </Button>
 }
