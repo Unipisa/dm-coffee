@@ -6,9 +6,10 @@ export type User = {
     picture: string
     id: string
     admin: boolean
+    authorized: boolean
   }
   
-export  type Context = {
+export type Context = {
     req: NextRequest
     res: Response|undefined
     user?: User
