@@ -121,26 +121,19 @@ export const resolvers = {
           }},
           { $project: { _id: 0, email: "$_id", creditCents: 1, count: 1, timestamp: 1 } },
           { $sort: { email: 1 } },
-          { $lookup: { 
-              from: "users", 
-              localField: "email", 
-              foreignField: "email", 
-              as: "user" 
-            } 
-          },
-          { $unwind: { path: "$user", preserveNullAndEmptyArrays: true} },
-          { $project: { 
-            _id: "$user._id",
-            email: 1, 
-            creditCents: 1, 
-            count: 1, 
-            timestamp: 1, 
-            admin: "$user.admin" } }
         ]).toArray()
-        console.log(JSON.stringify(result))
+        // console.log(JSON.stringify(result))
         return result
       },
-  
+
+      users: async(_: any,__: {}, context: Context) => {
+        requireAdminUser(context)
+        const db = (await databasePromise).db
+        const users = db.collection("users")
+        const result = await users.find({}).toArray()
+        return result
+      },
+            
       notices: async(_: any, __: {}, context: Context) => {
         const user = requireAuthenticatedUser(context)
   
@@ -299,6 +292,7 @@ export const resolvers = {
         requireAdminUser(context)
         const db = (await databasePromise).db
         const users = db.collection("users")
+        console.log(`updating user: ${_id} with data: ${JSON.stringify(data)}`)
         const result = await users.updateOne({ _id: new ObjectId(_id) }, 
           { $set: data })
         return true

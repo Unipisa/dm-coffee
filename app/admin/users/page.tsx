@@ -36,6 +36,7 @@ query GetUsers {
     _id
     email
     admin
+    authorized
     }
 }`
 
@@ -88,12 +89,12 @@ function Users() {
                     <Td className="text-right">{transactions && <Amount cents={transactions.creditCents}/>}</Td>
                     <Td className="text-left">{transactions && myDate(transactions.timestamp)}</Td>
                     <Td className="text-left">
-                      {!edit && user.authorized?"✅":""}
-                      {edit && user._id && <UpdateAuthorizedButton user={user} />}
+                      {!edit && user?.authorized?"✅":""}
+                      {edit && user?._id && <UpdateAuthorizedButton user={user} />}
                     </Td>
                     <Td className="text-left">
-                      {!edit && user.admin?"✅":""}
-                      {edit && user._id && <UpdateAdminButton user={user} />}
+                      {!edit && user?.admin?"✅":""}
+                      {edit && user?._id && <UpdateAdminButton user={user} />}
                     </Td>
                 </Tr>
             )}
@@ -109,7 +110,7 @@ mutation UpdateUser($_id: String!, $data: UpdateUserInput) {
 
 function UpdateAdminButton({user}:{user: {_id: string, admin: Boolean}}) {
   const [updateUser, {data, loading, error}] = useMutation(UPDATE_USER, {
-      refetchQueries: ["GetUserTransactions"]
+      refetchQueries: ["GetUserTransactions", "GetUsers"]
   })
   return user.admin 
     ? <Button onClick={() => updateUser({variables: {_id: user._id, data: {admin: false}}})}>
@@ -122,13 +123,13 @@ function UpdateAdminButton({user}:{user: {_id: string, admin: Boolean}}) {
 
 function UpdateAuthorizedButton({user}:{user: {_id: string, authorized: Boolean}}) {
   const [updateUser, {data, loading, error}] = useMutation(UPDATE_USER, {
-      refetchQueries: ["GetUserTransactions"]
+      refetchQueries: ["GetUserTransactions", "GetUsers"]
   })
   return user.authorized 
     ? <Button onClick={() => updateUser({variables: {_id: user._id, data: {authorized: false}}})}>
-      remove admin
+      remove authorization
     </Button> 
     :<Button onClick={() => updateUser({variables: {_id: user._id, data: {authorized: true}}})}>
-      make admin
+      give authorization
     </Button>
 }

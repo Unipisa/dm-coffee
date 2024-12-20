@@ -25,14 +25,18 @@ export const typeDefs = gql`
     timestamp: Timestamp
   }
 
-  type User {
+  type UserTransactions {
     email: String
     creditCents: Int
     count: Int
     timestamp: Timestamp
-    admin: Boolean
-    authorized: Boolean
+  }
+
+  type User {
     _id: String
+    email: String,
+    admin: Boolean,
+    authorized: Boolean,
   }
 
   type Balance {
@@ -94,7 +98,9 @@ export const typeDefs = gql`
     """
     transactions aggregated by users
     """
-    userTransactions: [User]
+    userTransactions: [UserTransactions]
+
+    users: [User]
 
     """
     notices
