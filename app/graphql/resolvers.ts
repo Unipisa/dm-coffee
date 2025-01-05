@@ -73,13 +73,14 @@ export const resolvers = {
       },
   
       transactionYears: async(_: any, __: {}, context: Context) => {
-        const user = requireAuthenticatedUser(context)
+        requireAuthenticatedUser(context)
         const db = (await databasePromise).db
         const account = db.collection("account")
         const result = await account.aggregate([
           { $group: { 
             _id: { $year: "$timestamp" },
           }},
+          { $sort: { _id: -1 } },
           { $project: { _id: 0, year: "$_id" } }
         ]).toArray()
         return result.map(x => x.year)
