@@ -9,6 +9,7 @@ const GET_BALANCE = gql`
     balance {
       cents
       count
+      grams
     }
   }`
 
@@ -19,7 +20,11 @@ export default function Balance() {
     if (loading) return <Loading />
     if (error) return <Error error={error}/>
     return <div>
-      <p>Bilancio complessivo: <Amount prefix="€" cents={data.balance.cents}/> (<b>{data.balance.count}</b> caffè)</p>
+      <p>
+        Bilancio complessivo: 
+        <Amount prefix="€" cents={data.balance.cents}/> 
+        {} (<b>{data.balance.count}</b> caffè
+        {data.balance.grams && `, ${data.balance.grams}g grani`})</p>
     </div>
   }
   

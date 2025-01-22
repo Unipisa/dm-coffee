@@ -50,6 +50,7 @@ const GET_TRANSACTIONS = gql`
       email
       count
       amountCents
+      coffeeGrams
       description
       code
     }
@@ -61,6 +62,7 @@ type Transaction = {
   email: string,
   count: number,
   amountCents: number,
+  coffeeGrams: number,
   description: string,
   code: string,
 }
@@ -98,6 +100,9 @@ function Transactions({year}:{year: number}) {
             €
           </Th>
           <Th className="text-left">
+            g
+          </Th>
+          <Th className="text-left">
             description
           </Th>
           {!edit && <Th className="tex-left">
@@ -116,8 +121,8 @@ function Transactions({year}:{year: number}) {
 }
 
 const SAVE_TRANSACTION = gql`
-  mutation SaveTransaction($_id: String, $timestamp: String, $email: String, $count: Int, $amountCents: Int, $description: String) {
-    transaction(_id: $_id, timestamp: $timestamp, email: $email, count: $count, amountCents: $amountCents, description: $description)
+  mutation SaveTransaction($_id: String, $timestamp: String, $email: String, $count: Int, $amountCents: Int, $coffeeGrams: Int, $description: String) {
+    transaction(_id: $_id, timestamp: $timestamp, email: $email, count: $count, amountCents: $amountCents, coffeeGrams: $coffeeGrams, description: $description)
   }`
 
 function TransactionRow({transaction, edit}:{
@@ -127,12 +132,14 @@ function TransactionRow({transaction, edit}:{
   const originalEmail = transaction?.email || ''
   const originalCount = transaction?.count || 0
   const originalAmount = transaction?.amountCents || 0
+  const originalGrams = transaction?.coffeeGrams || 0
   const originalDescription = transaction?.description || ''
   const timestamp = transaction?.timestamp || new Date().toISOString()
 
   const [newEmail, setEmail] = useState(originalEmail)
   const [newCount, setCount] = useState(originalCount)
   const [newAmount, setAmount] = useState(originalAmount)
+  const [newGrams, setGrams] = useState(originalGrams)
   const [newDescription, setDescription] = useState(originalDescription)
   const [editing, setEditing] = useState(false)
   const modified = (newEmail !== originalEmail) || (newCount !== originalCount) || (newAmount !== originalAmount) || (newDescription !== originalDescription)
@@ -148,11 +155,21 @@ function TransactionRow({transaction, edit}:{
     </Td>
     <Td className="text-right">{transaction && !editing 
       ? (originalCount || '')
-      : <input type="number" placeholder="count" value={newCount || ''} size={4} onChange={e => setCount(parseInt(e.target.value) || 0)} />}
+      : <input 
+          type="number" placeholder="count" value={newCount || ''} 
+          size={4} style={{width: "4em"}} onChange={e => setCount(parseInt(e.target.value) || 0)} />}
     </Td>
     <Td className="text-right">{transaction && !editing 
       ? <Amount cents={originalAmount}/>
-      : <input type="number" placeholder="cents" value={newAmount || ''} onChange={e => setAmount(parseInt(e.target.value))} />}
+      : <input 
+          type="number" placeholder="cents" value={newAmount || ''} 
+          size={5} style={{width: "6em"}} onChange={e => setAmount(parseInt(e.target.value))} />}
+    </Td>
+    <Td className="text-right">{transaction && !editing
+      ? (originalGrams || '')
+      : <input 
+          type="number" placeholder="grams" value={newGrams || ''} 
+          size={5} style={{width: "6em"}} onChange={e => setGrams(parseInt(e.target.value) || 0)} />}
     </Td>
     <Td>{transaction && !editing ?originalDescription
     :<input type="text" placeholder="description" value={newDescription} onChange={e => setDescription(e.target.value)} />}
@@ -183,6 +200,7 @@ function TransactionRow({transaction, edit}:{
     setEmail(originalEmail)
     setCount(0)
     setAmount(originalAmount)
+    setGrams(originalGrams)
     setDescription(originalDescription)
     setEditing(false)
   }
@@ -193,6 +211,7 @@ function TransactionRow({transaction, edit}:{
       email: newEmail,
       count: newCount,
       amountCents: newAmount,
+      coffeeGrams: newGrams,
       description: newDescription
     }
     console.log(`SAVE ${JSON.stringify(variables)}`)

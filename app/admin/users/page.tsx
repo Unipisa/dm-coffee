@@ -24,9 +24,10 @@ const GET_USER_TRANSACTIONS = gql`
 query GetUserTransactions {
   userTransactions {
     email
-    creditCents
-    timestamp
     count
+    creditCents
+    coffeeGrams
+    timestamp
   }
 }`
 
@@ -76,6 +77,7 @@ function Users() {
                 <Th className="text-left">email</Th>
                 <Th className="text-right">#</Th>
                 <Th className="text-right">€</Th>
+                <Th className="text-right">g</Th>
                 <Th className="text-left">data</Th>
                 <Th className="text-left">authorized</Th>
                 <Th className="text-left">admin</Th>
@@ -87,6 +89,7 @@ function Users() {
                     <Td>{email}</Td>
                     <Td className="text-right">{transactions?.count||""}</Td>
                     <Td className="text-right">{transactions && <Amount cents={transactions.creditCents}/>}</Td>
+                    <Td className="text-right">{transactions?.coffeeGrams||""}</Td>
                     <Td className="text-left">{transactions && myDate(transactions.timestamp)}</Td>
                     <Td className="text-left">
                       {!edit && user?.authorized?"✅":""}

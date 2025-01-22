@@ -19,6 +19,7 @@ export const typeDefs = gql`
     _id: String
     count: Int
     amountCents: Int
+    coffeeGrams: Int
     description: String
     email: String
     code: String
@@ -29,6 +30,7 @@ export const typeDefs = gql`
     email: String
     creditCents: Int
     count: Int
+    coffeeGrams: Int
     timestamp: Timestamp
   }
 
@@ -41,7 +43,8 @@ export const typeDefs = gql`
 
   type Balance {
     cents: Int
-    count: Int  
+    count: Int
+    grams: Int
   }
 
   type Notice {
@@ -125,7 +128,7 @@ export const typeDefs = gql`
     crea o modifica una transazione
     richiede autenticazione admin
     """
-    transaction(_id: String, timestamp: String, email: String, count: Int, amountCents: Int, description: String): Boolean
+    transaction(_id: String, timestamp: String, email: String, count: Int, amountCents: Int, coffeeGrams: Int, description: String): Boolean
 
     """
     addebita un caffé
