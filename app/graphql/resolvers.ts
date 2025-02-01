@@ -194,20 +194,43 @@ export const resolvers = {
            */
           const COST = await getCost()
           const transactions = db.collection("account")
-          await transactions.insertOne({
-            count: 1,
-            email: user.email,
-            amountCents: -COST,
-            description: `coffee`,
-            code: code,
-            timestamp: new Date()
-          })        
+          const email = user.email
+          const description = "coffee"
+          const timestamp = new Date()
+          const amountCents = -COST
+          const count = 1
+
+          const existingTransaction = await transactions.findOne({
+            email, code, description,
+            timestamp: { $gte: new Date(timestamp.getTime() - 30000) }
+          });
+
+          const last_count = existingTransaction ? existingTransaction.count : 0
+
+          if (existingTransaction) {
+            await transactions.updateOne(
+              { _id: existingTransaction._id },
+              { $inc: { 
+                count, 
+                amountCents
+              } }
+            );
+          } else {
+            await transactions.insertOne({
+              count,
+              email,
+              amountCents,
+              description,
+              code,
+              timestamp
+            });
+          }
           const result = await transactions.aggregate([
             { $match: { email: user.email } },
             { $group: { _id: null, creditCents: { $sum: "$amountCents" } } }
           ]).toArray()
           const credit = result.length > 0 ? result[0].creditCents : 0
-          return [ `${COST} cents charged`, `Balance:  ${(credit/100).toFixed(2)} EUR`, `${user.email.split('@')[0]}`].join('\n')
+          return [ last_count ? `${COST}x${last_count+1} cents charged` : `${COST} cents charged`, `Balance:  ${(credit/100).toFixed(2)} EUR`, `${user.email.split('@')[0]}`].join('\n')
         } else {
           const CARD_PAIRING_MILLISECONDS = 1000*60
           // cerca utenti che hanno chiesto l'accoppiamento della tessera
