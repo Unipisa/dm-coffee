@@ -11,12 +11,20 @@ async function getClient() {
   return client
 }
 
+async function getDb() {
+  const { db } = await databasePromise
+  return db
+}
+
 const { 
   GOOGLE_AUTH_CLIENT_ID, 
   GOOGLE_AUTH_CLIENT_SECRET,
   DATABASE_NAME,
   UNSAFE_AUTOMATIC_LOGIN_EMAIL,
+  PERMITTED_EMAIL_REGEX,
 } = config
+
+const PERMITTED_EMAIL_REGEXP = new RegExp(PERMITTED_EMAIL_REGEX)
 
 const authOptions: AuthOptions = {
   providers: discoverProviders(),
@@ -27,6 +35,7 @@ const authOptions: AuthOptions = {
       if (account?.provider === 'google') {
         // you can inspect: profile.email_verified
         // and: profile.email
+
       }
       return true
     },
@@ -40,6 +49,14 @@ const authOptions: AuthOptions = {
   }),
   pages: {
     signIn: '/api/auth/signin',
+  },
+  events: {
+    async createUser({ user }) {
+      const db = await getDb();
+      const authorized = user.email && PERMITTED_EMAIL_REGEXP.test(user.email)
+      const usersCollection = db.collection('users');
+      await usersCollection.updateOne({email: user.email}, {$set: {authorized}});
+    }
   }
 }
 

@@ -1,7 +1,5 @@
 import { User, Context } from './types'
 import config from '../config'
-import { isPermittedEmail } from '../utils'
-import databasePromise from '../db'
 
 /**
  * @param context 
@@ -16,26 +14,13 @@ export function requireAuthenticatedUser(context: Context) {
   
   /**
    * @param context 
-   * @returns user object if authenticated and email is permitted by configuration
-   * @throws error if not authenticated or email is not permitted
+   * @returns user object if authenticated and authorized
+   * @throws error otherwise
    */
   export function requirePermittedUser(context: Context) {
     const user = requireAuthenticatedUser(context)
-    if (!user?.authorized) {
-      if (!isPermittedEmail(user?.email)) throw new Error("email not permitted")
-      /* user is permitted by regex on email address. Store the information in the user object */
-      user.authorized = true
-      // async function is being called in sync function
-      // should be fine... we are not waiting for the result
-      enableUserAuthorization(user)
-      return user
-    }
+    if (!user?.authorized) throw new Error("user not permitted")
     return user
-
-    async function enableUserAuthorization(user: User) {
-      const db = (await databasePromise).db
-      await db.collection('users').updateOne({ email: user.email }, { $set: { authorized: true } })
-    }
   }
   
   /**

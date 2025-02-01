@@ -1,8 +1,6 @@
 import databasePromise from "../db"
 import { ObjectId } from 'mongodb'
 
-import config from '../config'
-import { isPermittedEmail } from '../utils'
 import { Context } from './types'
 import { requireAdminUser, requireAuthenticatedUser, requirePermittedUser, requireCardAuthentication } from './permissions'
 
@@ -23,9 +21,7 @@ export const resolvers = {
         if (!context.user) return 
         const users = (await databasePromise).db.collection('users')
         const user = await users.findOne({email: context.user.email})
-        const admin = config.ADMINS.split(',').includes(context.user.email)
-        const authorized = isPermittedEmail(context.user.email)
-        return {...user, admin, authorized}
+        return {...user}
       },
   
       credit: async(_: any, __: {}, context: Context) => {

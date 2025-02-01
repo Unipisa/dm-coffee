@@ -1,7 +1,5 @@
 import {Temporal} from '@js-temporal/polyfill'
 
-import config from './config'
-
 export function myDateTime(isoTimestamp: string|undefined|null) {
     if (isoTimestamp === undefined) return '???'
     if (isoTimestamp === null) return '---'
@@ -30,10 +28,4 @@ export function myTime(isoTimestamp: string|undefined|null) {
     const zonedDateTime = instant.toZonedDateTimeISO('Europe/Rome')
     const {hour, minute} = zonedDateTime
     return `${hour}:${String(minute).padStart(2, '0')}`
-}
-
-const PERMITTED_EMAIL_REGEX = new RegExp(config.PERMITTED_EMAIL_REGEX)
-export function isPermittedEmail(email: string|null|undefined) {
-    if (!email) return false
-    return PERMITTED_EMAIL_REGEX.test(email)
 }
