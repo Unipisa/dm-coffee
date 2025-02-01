@@ -79,6 +79,7 @@ function Users() {
                 <Th className="text-right">€</Th>
                 <Th className="text-right">g</Th>
                 <Th className="text-left">data</Th>
+                <Th className="text-left">logged</Th>
                 <Th className="text-left">authorized</Th>
                 <Th className="text-left">admin</Th>
             </tr>
@@ -91,6 +92,7 @@ function Users() {
                     <Td className="text-right">{transactions && <Amount cents={transactions.creditCents}/>}</Td>
                     <Td className="text-right">{transactions?.coffeeGrams||""}</Td>
                     <Td className="text-left">{transactions && myDate(transactions.timestamp)}</Td>
+                    <Td className="text-left">{user?"✅":""}</Td>
                     <Td className="text-left">
                       {!edit && user?.authorized?"✅":""}
                       {edit && user?._id && <UpdateAuthorizedButton user={user} />}

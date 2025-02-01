@@ -24,7 +24,7 @@ export default function Balance() {
         Bilancio complessivo: 
         <Amount prefix="€" cents={data.balance.cents}/> 
         {} (<b>{data.balance.count}</b> caffè
-        {data.balance.grams && `, ${data.balance.grams}g grani`})</p>
+        {data.balance.grams>0 && `, ${data.balance.grams}g grani`})</p>
     </div>
   }
   
