@@ -36,14 +36,14 @@ export const resolvers = {
             _id: null, 
             creditCents: { $sum: "$amountCents" },
             count: { $sum: "$count" },
-            coffeGrams: { $sum: "$coffeeGrams" },
+            coffeeGrams: { $sum: "$coffeeGrams" },
           } }
         ]).toArray()
         if (result.length === 0) return 0
         return {
           cents: result[0].creditCents, 
           count: result[0].count,
-          grams: result[0].coffeGrams
+          grams: result[0].coffeeGrams
         }
       },
   
@@ -123,10 +123,10 @@ export const resolvers = {
             _id: "$email", 
             creditCents: { $sum: "$amountCents" },
             count: { $sum: "$count" },
-            coffeGrams: { $sum: "$coffeeGrams" },
+            coffeeGrams: { $sum: "$coffeeGrams" },
             timestamp: { $max: "$timestamp" },
           }},
-          { $project: { _id: 0, email: "$_id", creditCents: 1, count: 1, coffeGrams: 1, timestamp: 1 } },
+          { $project: { _id: 0, email: "$_id", creditCents: 1, count: 1, coffeeGrams: 1, timestamp: 1 } },
           { $sort: { email: 1 } },
         ]).toArray()
         // console.log(JSON.stringify(result))

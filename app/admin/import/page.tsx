@@ -16,7 +16,7 @@ import Td from '../../components/Td'
 
 const SAVE_TRANSACTION = gql`
   mutation SaveTransaction($_id: String, $timestamp: String, $email: String, $count: Int, $amountCents: Int, $coffeeGrams: Int, $description: String) {
-    transaction(_id: $_id, timestamp: $timestamp, email: $email, count: $count, amountCents: $amountCents, coffeGrams: $coffeGrams, description: $description)
+    transaction(_id: $_id, timestamp: $timestamp, email: $email, count: $count, amountCents: $amountCents, coffeeGrams: $coffeeGrams, description: $description)
   }`
 
 const GET_COST = gql`
@@ -45,7 +45,7 @@ type Variables = {
     timestamp?: string
     count?: number
     amountCents?: number
-    coffeGrams?: number
+    coffeeGrams?: number
     email?: string
     description?: string
 }
@@ -88,7 +88,7 @@ function parseRow(mapping: Mapping, cols: COLS, COST: number) {
     if (mapped.grams) {
         const grams = parseInt(mapped.grams)
         if (`${grams}` !== mapped.grams) error ||= `invalid grams ${mapped.grams}`
-        variables.coffeGrams = grams
+        variables.coffeeGrams = grams
     }
 
     if (!mapped.count && !mapped.amount && !mapped.grams) error ||= `either count, grams or amount required`
@@ -150,7 +150,7 @@ function ImportWidget() {
                     <Th>timestamp</Th>
                     <Th>count</Th>
                     <Th>amountCents</Th>
-                    <Th>coffeGrams</Th>
+                    <Th>coffeeGrams</Th>
                     <Th>email</Th>
                     <Th>description</Th>
                     {Array.from({length: ncols}, (_,i) => i).map(i => 
@@ -179,7 +179,7 @@ function ImportWidget() {
                         <Td>{new Date(item.parse.timestamp||'').toLocaleString()}</Td>
                         <Td>{item.parse.count}</Td>
                         <Td>{item.parse.amountCents}</Td>
-                        <Td>{item.parse.coffeGrams}</Td>
+                        <Td>{item.parse.coffeeGrams}</Td>
                         <Td>{item.parse.email}</Td>
                         <Td>{item.parse.description}</Td>
                         {item.row.cols.map((cell, j) => 
