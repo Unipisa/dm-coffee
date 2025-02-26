@@ -7,7 +7,7 @@ export const typeDefs = gql`
     email: String
     admin: Boolean
     authorized: Boolean
-    code: String
+    codes: [String]
   }
 
   type Cost {
@@ -39,6 +39,7 @@ export const typeDefs = gql`
     email: String,
     admin: Boolean,
     authorized: Boolean,
+    codes: [String]
   }
 
   type Balance {
@@ -146,7 +147,7 @@ export const typeDefs = gql`
     """
     remove card pairing
     """
-    card_remove_pairing: Boolean
+    card_remove_pairing(code: String!): Boolean
 
     """
     crea una segnalazione

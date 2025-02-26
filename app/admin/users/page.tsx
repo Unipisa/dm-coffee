@@ -38,6 +38,7 @@ query GetUsers {
     email
     admin
     authorized
+    codes
     }
 }`
 
@@ -75,6 +76,7 @@ function Users() {
         <Thead>
             <tr>
                 <Th className="text-left">email</Th>
+                <Th className="text-left">cards</Th>
                 <Th className="text-right">#</Th>
                 <Th className="text-right">€</Th>
                 <Th className="text-right">g</Th>
@@ -88,6 +90,7 @@ function Users() {
             {Object.keys(userDict).sort().map(email => ({email, ...userDict[email]})).map(({ email, user, transactions }: any) => 
                 <Tr key={email}>
                     <Td>{email}</Td>
+                    <Td>{user?.codes?.join(", ")}</Td>
                     <Td className="text-right">{transactions?.count||""}</Td>
                     <Td className="text-right">{transactions && <Amount cents={transactions.creditCents}/>}</Td>
                     <Td className="text-right">{transactions?.coffeeGrams||""}</Td>

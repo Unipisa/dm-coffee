@@ -21,7 +21,9 @@ export const resolvers = {
         if (!context.user) return 
         const users = (await databasePromise).db.collection('users')
         const user = await users.findOne({email: context.user.email})
-        return {...user}
+        if (!user) throw new Error(`user not found: ${context.user.email}`)
+        const codes = user.code ? Array.isArray(user.code) ? user.code : [user.code] : []
+        return {...user, codes}
       },
   
       credit: async(_: any, __: {}, context: Context) => {
@@ -136,7 +138,10 @@ export const resolvers = {
         const db = (await databasePromise).db
         const users = db.collection("users")
         const result = await users.find({}).toArray()
-        return result
+        return result.map(user => ({
+          ...user,
+          codes: user.code ? Array.isArray(user.code) ? user.code : [user.code] : [],
+        }))
       },
             
       notices: async(_: any, __: {}, context: Context) => {
@@ -171,11 +176,16 @@ export const resolvers = {
         return MILLISECONDS
       },
   
-      card_remove_pairing: async(_: any, __: {}, context: Context) => {
+      card_remove_pairing: async(_: any, {code}: {code: string}, context: Context) => {
         const user = requireAuthenticatedUser(context)
         const users = (await databasePromise).db.collection("users")
+        const theUser = await users.findOne({email: user.email})
+        if (!theUser) throw new Error(`user not found: ${user.email}`)
+        const theCode = theUser.code
+        const codes = theCode ? (Array.isArray(theCode) ? theCode : [theCode]) : []
+        if (!codes.includes(code)) return false
         await users.updateOne({email: user.email},
-          { $set: { code: null }})
+          { $set: { code: codes.filter(c => c !== code) } })
         return true 
       },
   
@@ -232,6 +242,8 @@ export const resolvers = {
           const credit = result.length > 0 ? result[0].creditCents : 0
           return [ last_count ? `${COST}x${last_count+1} cents charged` : `${COST} cents charged`, `Balance:  ${(credit/100).toFixed(2)} EUR`, `${user.email.split('@')[0]}`].join('\n')
         } else {
+          // la carta non è collegata a nessun utente
+
           const CARD_PAIRING_MILLISECONDS = 1000*60
           // cerca utenti che hanno chiesto l'accoppiamento della tessera
           const pairings = await db.collection("users").aggregate([
@@ -242,10 +254,12 @@ export const resolvers = {
           } else if (!code) {
             return ["invalid badge"].join('\n')
           } else if (pairings.length === 1) {
+            const user = pairings[0]
+            const codes = user.code ? [...user.code, code] : code;
             await users.updateOne({ _id: pairings[0]._id }, 
               { $set: { 
-                scan_request_limit_timestamp: null,
-                code
+              scan_request_limit_timestamp: null,
+              code: codes
               } })
             return ["badge paired","swipe again to charge"].join('\n')
           } else {

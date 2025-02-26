@@ -5,6 +5,7 @@ import { SessionProvider } from 'next-auth/react'
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import { redirect } from "next/navigation"
 import { gql, useQuery } from '@apollo/client'
+import { Profile } from '../graphql/types'
 
 import Headers from './Headers'
 import Error from './Error'
@@ -40,19 +41,12 @@ function Auth() {
     return null
 }
 
-type Profile = {
-    email: string
-    admin: boolean
-    code: string
-    authorized: boolean
-}
-
 const GET_PROFILE = gql`
   query GetProfile {
     profile {
       email
       admin
-      code
+      codes
       authorized
     }
   }`

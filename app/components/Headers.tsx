@@ -12,8 +12,8 @@ function classNames(...classes: any) {
 
 export default function Headers() {
     const { data: session } = useSession()
-    const profile = useProfile()
     const current_path = usePathname()
+    const profile = useProfile()
 
     const isAdmin = profile?.admin;
 
@@ -22,7 +22,7 @@ export default function Headers() {
         { name: 'segnalazioni', href: '/notices', current: current_path === '/notices' },
     ]
 
-    if (profile && !profile.code) {
+    if (profile && profile.codes.length == 0) {
         navigation.push({ name: 'associa tessera', href: '/pairing', current: current_path === '/pairing' })
     }
 
@@ -60,77 +60,7 @@ export default function Headers() {
             </div>
             <div className='flex-1'></div>
             <div className="mt-1">
-            {/* Profile dropdown */}
-            <Menu as="div" className="mx-1">
-                <div>
-                <MenuButton className="relative flex rounded-full bg-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
-                    <span className="absolute -inset-1.5" />
-                    <span className="sr-only">Open user menu</span>
-                    {session?.user?.image 
-                        ? <img
-                            alt=""
-                            src={session.user.image}
-                            className="size-10 rounded-full"
-                            />
-                        : <UserIcon className="size-8 rounded-full" />
-                        }
-                 {        
-                    session?.user?.name && 
-                    <div className='align-left'>
-                        <p className="text-left pl-2 text-sm m-auto block">{session?.user?.name}</p>
-                        <p className="text-left text-gray-700 pl-2 text-sm m-auto block">{session?.user?.email}</p>
-                    </div>
-                }
-                </MenuButton>
-                </div>
-                <MenuItems
-                transition
-                className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-0 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
-                >
-                <MenuItem>{ 
-                    session?.user?.email && 
-                        <p className="border-b-2 border-gray-500 bg-gray-200 font-bold block px-4 py-2 text-sm">{session?.user?.email}</p>
-                }
-                </MenuItem>
-                <MenuItem>
-                    <a
-                    href="/pairing"
-                    className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
-                    >
-                        { profile?.code ? `tessera ${profile.code}` : 'associa la tessera' }
-                    </a>
-                </MenuItem>
-                {
-                    isAdmin && <>
-                        <MenuItem>
-                            <a
-                                href="/admin/import"
-                                className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
-                                >
-                            importazione
-                            </a>
-                        </MenuItem>
-                        <MenuItem>
-                            <a
-                                href="/admin/cost"
-                                className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
-                                >
-                            costo unitario
-                            </a>
-                        </MenuItem>
-                    </>
-                }
-                <MenuItem>
-                    <a
-                        href="#"
-                        onClick={() => signOut()}
-                        className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
-                    >
-                    esci
-                    </a>
-                </MenuItem>
-                </MenuItems>
-            </Menu>
+                {session?.user && <Profile user={session.user}/> }
             </div>
         </div>
         
@@ -173,4 +103,81 @@ export default function Headers() {
         </div>
         </DisclosurePanel>
     </Disclosure>
+}
+
+function Profile({user} : {
+    user: any
+}) {
+    const profile = useProfile()
+    const isAdmin = profile?.admin;
+
+    return <Menu as="div" className="mx-1">
+        <div>
+            <MenuButton className="relative flex rounded-full bg-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                <span className="absolute -inset-1.5" />
+                <span className="sr-only">Open user menu</span>
+                {user?.image 
+                    ? <img
+                        alt=""
+                        src={user.image}
+                        className="size-10 rounded-full"
+                        />
+                    : <UserIcon className="size-8 rounded-full" />
+                    }
+            {        
+                user?.name && 
+                <div className='align-left'>
+                    <p className="text-left pl-2 text-sm m-auto block">{user?.name}</p>
+                    <p className="text-left text-gray-700 pl-2 text-sm m-auto block">{user?.email}</p>
+                </div>
+            }
+            </MenuButton>
+        </div>
+        <MenuItems
+            transition
+            className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-0 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
+        >
+            <MenuItem>{ 
+                user?.email && 
+                    <p className="border-b-2 border-gray-500 bg-gray-200 font-bold block px-4 py-2 text-sm">{user?.email}</p>
+            }
+            </MenuItem>
+            <MenuItem>
+                <a
+                href="/pairing"
+                className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                >
+                    { profile?.codes.length == 0 ? 'associa la tessera' : "gestisci tessera" }
+                </a>
+            </MenuItem>
+            { isAdmin && <>
+                <MenuItem>
+                    <a
+                        href="/admin/import"
+                        className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                        >
+                    importazione
+                    </a>
+                </MenuItem>
+                <MenuItem>
+                    <a
+                        href="/admin/cost"
+                        className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                        >
+                    costo unitario
+                    </a>
+                </MenuItem>
+            </>
+            }
+            <MenuItem>
+                <a
+                    href="#"
+                    onClick={() => signOut()}
+                    className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                >
+                esci
+                </a>
+            </MenuItem>
+        </MenuItems>
+    </Menu>
 }

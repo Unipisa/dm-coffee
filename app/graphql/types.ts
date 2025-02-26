@@ -15,3 +15,9 @@ export type Context = {
     user?: User
   }
   
+export type Profile = {
+    email: string
+    admin: boolean
+    authorized: boolean
+    codes: string[]
+  }
