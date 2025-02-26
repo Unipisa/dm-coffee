@@ -255,11 +255,11 @@ export const resolvers = {
             return ["invalid badge"].join('\n')
           } else if (pairings.length === 1) {
             const user = pairings[0]
-            const codes = user.code ? [...user.code, code] : code;
+            const codes = user.code ? Array.isArray(user.code) ? user.code : [user.code] : [];
             await users.updateOne({ _id: pairings[0]._id }, 
               { $set: { 
               scan_request_limit_timestamp: null,
-              code: codes
+              code: [...codes, code]
               } })
             return ["badge paired","swipe again to charge"].join('\n')
           } else {
