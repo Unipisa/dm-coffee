@@ -40,6 +40,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY migrate-mongo-config.js ./
 COPY migrations ./migrations
+RUN npm install migrate-mongo@12.1.3 dotenv@16.4.7 --omit=dev
+
 EXPOSE 3000
 USER nextjs
 CMD ["sh", "-c", "npx migrate-mongo up && node server.js"]
