@@ -22,8 +22,7 @@ export const resolvers = {
         const users = (await databasePromise).db.collection('users')
         const user = await users.findOne({email: context.user.email})
         if (!user) throw new Error(`user not found: ${context.user.email}`)
-        const codes = user.code ? Array.isArray(user.code) ? user.code : [user.code] : []
-        return {...user, codes}
+        return user
       },
   
       credit: async(_: any, __: {}, context: Context) => {
@@ -138,10 +137,7 @@ export const resolvers = {
         const db = (await databasePromise).db
         const users = db.collection("users")
         const result = await users.find({}).toArray()
-        return result.map(user => ({
-          ...user,
-          codes: user.code ? Array.isArray(user.code) ? user.code : [user.code] : [],
-        }))
+        return result
       },
             
       notices: async(_: any, __: {}, context: Context) => {
@@ -181,11 +177,10 @@ export const resolvers = {
         const users = (await databasePromise).db.collection("users")
         const theUser = await users.findOne({email: user.email})
         if (!theUser) throw new Error(`user not found: ${user.email}`)
-        const theCode = theUser.code
-        const codes = theCode ? (Array.isArray(theCode) ? theCode : [theCode]) : []
+        const codes = theUser.codes
         if (!codes.includes(code)) return false
         await users.updateOne({email: user.email},
-          { $set: { code: codes.filter(c => c !== code) } })
+          { $set: { codes: codes.filter((c:string) => c !== code) } })
         return true 
       },
   
@@ -193,7 +188,7 @@ export const resolvers = {
         requireCardAuthentication(context)
         const db = (await databasePromise).db
         const users = db.collection("users")
-        const user = await users.findOne({ code })
+        const user = await users.findOne({ codes: code })
         if (user) {
           /**
            * ATTENZIONE: un utente che e' riuscito a collegare la tessera
@@ -255,11 +250,11 @@ export const resolvers = {
             return ["invalid badge"].join('\n')
           } else if (pairings.length === 1) {
             const user = pairings[0]
-            const codes = user.code ? [...user.code, code] : code;
+            const codes = [...(user.codes || []), code];
             await users.updateOne({ _id: pairings[0]._id }, 
               { $set: { 
               scan_request_limit_timestamp: null,
-              code: codes
+              codes: codes
               } })
             return ["badge paired","swipe again to charge"].join('\n')
           } else {

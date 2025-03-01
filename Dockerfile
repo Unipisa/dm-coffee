@@ -40,4 +40,5 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 EXPOSE 3000
 USER nextjs
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "npx migrate-mongo up && node server.js"]
+#CMD ["node", "server.js"]
