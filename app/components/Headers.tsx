@@ -22,7 +22,9 @@ export default function Headers() {
         { name: 'segnalazioni', href: '/notices', current: current_path === '/notices' },
     ]
 
-    if (profile && profile.codes.length == 0) {
+    const codes = profile?.codes || []
+
+    if (profile && codes.length==0) {
         navigation.push({ name: 'associa tessera', href: '/pairing', current: current_path === '/pairing' })
     }
 
@@ -110,6 +112,7 @@ function Profile({user} : {
 }) {
     const profile = useProfile()
     const isAdmin = profile?.admin;
+    const codes = profile?.codes || []
 
     return <Menu as="div" className="mx-1">
         <div>
@@ -147,7 +150,7 @@ function Profile({user} : {
                 href="/pairing"
                 className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
                 >
-                    { profile?.codes.length == 0 ? 'associa la tessera' : "gestisci tessera" }
+                    { codes.length==0 ? 'associa la tessera' : "gestisci tessera" }
                 </a>
             </MenuItem>
             { isAdmin && <>

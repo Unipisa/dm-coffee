@@ -27,15 +27,16 @@ const REMOVE_PAIRING = gql`
 
 function Pairings({}) {
     const profile = useProfile()
+    const codes = profile?.codes || []
     const [removePairing, {loading}] = useMutation(REMOVE_PAIRING, {refetchQueries: ["GetProfile"]}) 
     if (loading || !profile) return <Loading />
     return <>
-      { profile.codes.length > 0 && <h2 className="mt-2">Tessere associate</h2> }
-      { profile.codes.map(code => (
+      { codes.length > 0 && <h2 className="mt-2">Tessere associate</h2> }
+      { codes.map(code => (
         <div key={code}>Codice tessera: <span className="font-bold">{code}</span> {}
         <Button variant="alert" onClick={() => removePairing({ variables: { code } })}>Rimuovi associazione {code}</Button></div>
       ))}
-      <PairingRequest codes={profile.codes}/>
+      <PairingRequest codes={codes}/>
     </>
 }
 
