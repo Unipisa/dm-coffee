@@ -221,10 +221,7 @@ function ImportWidget() {
                 const {error, ...variables} = parse
                 console.log(`submitting ${JSON.stringify(parse)}`)
                 const res = await submitTransaction({ variables })
-                if (variables.amountCents && (parse.description?.includes('PayPal:')
-                    || parse.description?.includes('CRO:')
-                    || parse.description?.includes('satispay'))
-                ) {
+/*              if (variables.amountCents && false) {
                     // partita doppia
                     const res2 = await submitTransaction({ 
                         variables: {
@@ -235,7 +232,7 @@ function ImportWidget() {
                         }
                     }) 
                     // se fallisce siamo del gatto...
-                }
+                }*/
                 setTable(table => [...table, 
                     { 
                         state: res.data ? 'imported' : 'api error',
