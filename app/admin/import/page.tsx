@@ -13,6 +13,7 @@ import Thead from '../../components/Thead'
 import Th from '../../components/Th'
 import Tr from '../../components/Tr'
 import Td from '../../components/Td'
+import { useProfile } from '../../components/Provider'
 
 const SAVE_TRANSACTION = gql`
   mutation SaveTransaction($_id: String, $timestamp: String, $email: String, $count: Int, $amountCents: Int, $coffeeGrams: Int, $description: String) {
@@ -50,8 +51,11 @@ type Variables = {
     description?: string
 }
 
-function parseRow(mapping: Mapping, cols: COLS, COST: number) {
+type ParsedRow = Variables & {error: string}
+
+function parseRow(mapping: Mapping, cols: COLS, COST: number, inverse_email: string): ParsedRow {
     let error = ''
+    const sign = inverse_email ? -1 : 1
     const mapped = Object.fromEntries(headers.map(h => {
         let val = mapping[h]
         if (val === undefined) return [h, '']        
@@ -72,31 +76,32 @@ function parseRow(mapping: Mapping, cols: COLS, COST: number) {
     }
 
     if (mapped.count) {
-        const count = parseInt(mapped.count)
+        const count = sign * parseInt(mapped.count) 
         if (`${count}` !== mapped.count) error ||= `invalid count ${mapped.count}`
         variables.count = count
         if (!mapped.amount) variables.amountCents = -count * COST
     }
 
     if (mapped.amount) {
-        const amountCents = Math.round(parseFloat(mapped.amount)*100)
-        if (`${amountCents/100}` !== mapped.amount) error ||= `invalid amount ${mapped.amount}`
+        const amountCents = sign * Math.round(parseFloat(mapped.amount)*100)
+        if (`${sign*amountCents/100}` !== mapped.amount) error ||= `invalid amount ${mapped.amount}`
         variables.amountCents = amountCents
         if (!mapped.count) variables.count = 0
     }
 
     if (mapped.grams) {
-        const grams = parseInt(mapped.grams)
+        const grams = sign * parseInt(mapped.grams)
         if (`${grams}` !== mapped.grams) error ||= `invalid grams ${mapped.grams}`
         variables.coffeeGrams = grams
     }
 
     if (!mapped.count && !mapped.amount && !mapped.grams) error ||= `either count, grams or amount required`
 
-    variables.email = mapped.email
-    if (!mapped.email || !mapped.email.includes('@')) error ||= `invalid email ${mapped.email}`
+    variables.email = sign > 0 ? mapped.email : inverse_email
+    if (!mapped.email) error ||= `invalid email ${mapped.email}`
 
     variables.description = mapped.description || `importato il ${myDate(new Date().toISOString())}`
+    if (sign<0) variables.description = `da ${mapped.email}: ${variables.description}`
 
     return {
         ...variables,
@@ -109,12 +114,16 @@ function parseRow(mapping: Mapping, cols: COLS, COST: number) {
 }
 
 function ImportWidget() {
+    const profile = useProfile()
+    const inverse_email = profile?.email || ""
     const {loading: loadingCost, error: errorCost, data: dataCost} = useQuery(GET_COST)
     const COST = dataCost?.cost
     const [submitTransaction, transactionMutation] = useMutation(SAVE_TRANSACTION, {
         refetchQueries: ["GetTransactions"]})
     const [table, setTable] = useState<RowType[]>([])
     const [mapping, setMapping] = useState<Mapping>({})
+    // list of rows (indices) that need a reverse transaction
+    const [inverseTransactions, setInverseTransactions] = useState<number[]>([])
 
     const ncols = table.reduce((max, el) => Math.max(el.cols.length,max), 0)
 
@@ -146,6 +155,7 @@ function ImportWidget() {
         <Table>
             <Thead>
                 <tr>
+                    <Th>⚙</Th>
                     <Th>state</Th>
                     <Th>timestamp</Th>
                     <Th>count</Th>
@@ -173,20 +183,25 @@ function ImportWidget() {
                 </tr>
             </Thead>
             <tbody>
-                {table.map((row, i)=> ({row, i, parse: parseRow(mapping, row.cols, COST)})).map(item => 
-                    <Tr key={item.i}>
-                        <Td className={"bg-gray-300 " + (item.row.state || item.parse.error ? (item.row.state==="imported" ? "text-blue-500" : "text-red-500") : "text-green-500")}>{item.row.state || item.parse.error || 'valid'}</Td>
-                        <Td>{new Date(item.parse.timestamp||'').toLocaleString()}</Td>
-                        <Td>{item.parse.count}</Td>
-                        <Td>{item.parse.amountCents}</Td>
-                        <Td>{item.parse.coffeeGrams}</Td>
-                        <Td>{item.parse.email}</Td>
-                        <Td>{item.parse.description}</Td>
-                        {item.row.cols.map((cell, j) => 
-                            <Td className="bg-gray-300" key={j}>{cell}</Td>
-                        )}
-                    </Tr>
-                )}
+                {table.map((row, i)=> {
+                    const hasInverse = inverseTransactions.includes(i)
+                    return <>
+                        <ImportRow key={i} row={row} 
+                            mapping={mapping} COST={COST} 
+                            toggler={hasInverse ? null : () => setInverseTransactions(lst => [...lst, i])}
+                            inverse_email=""
+                        />
+                            {
+                            hasInverse && 
+                        <ImportRow key={-(i+1)} row={row} 
+                            mapping={mapping} COST={COST} 
+                            toggler={() => setInverseTransactions(lst => lst.filter(j => j!==i))}
+                            inverse_email={inverse_email}
+                            />
+                            }
+                        </>
+                    })
+                }
             </tbody>
         </Table>
     </>
@@ -204,46 +219,69 @@ function ImportWidget() {
 
     async function submitData() {
         setTable([])
-        for (const row of table) {
-            if (row.state != '') {
-                setTable(table => [...table, row])
-                continue
-            }
-            const parse = parseRow(mapping, row.cols, COST)
-            if (parse.error) {
-                setTable(table => [...table, {
-                    state: parse.error,
-                    cols: row.cols
-                }])
-                continue
-            } 
-            try {
-                const {error, ...variables} = parse
-                console.log(`submitting ${JSON.stringify(parse)}`)
-                const res = await submitTransaction({ variables })
-/*              if (variables.amountCents && false) {
-                    // partita doppia
-                    const res2 = await submitTransaction({ 
-                        variables: {
-                            ...variables,
-                            amountCents: -variables.amountCents,
-                            email: 'filippo.callegaro@unipi.it',
-                            description: `da ${variables.email}: ${variables.description}`
-                        }
-                    }) 
-                    // se fallisce siamo del gatto...
-                }*/
-                setTable(table => [...table, 
-                    { 
-                        state: res.data ? 'imported' : 'api error',
+        setInverseTransactions([])
+        for (let i=0; i<table.length; ++i) {
+            const row = table[i]
+            const has_inverse = inverseTransactions.includes(i)
+            for (let j=0;j < (has_inverse ? 2 : 1);++j) {
+                if (row.state != '') {
+                    setTable(table => [...table, row])
+                    continue
+                }
+                const parse = parseRow(mapping, row.cols, COST, j?inverse_email:"")
+                if (parse.error) {
+                    setTable(table => [...table, {
+                        state: parse.error,
                         cols: row.cols
                     }])
-            } catch (err) {
-                setTable(table => [...table, {
-                    state: 'network error',
-                    cols: row.cols
-                }])
+                    continue
+                } 
+                try {
+                    const {error, ...variables} = parse
+                    console.log(`submitting ${JSON.stringify(parse)}`)
+                    const res = await submitTransaction({ variables })
+                    setTable(table => [...table, 
+                        { 
+                            state: res.data ? 'imported' : 'api error',
+                            cols: row.cols
+                        }])
+                } catch (err) {
+                    setTable(table => [...table, {
+                        state: 'network error',
+                        cols: row.cols
+                    }])
+                }
             }
         }
     }
+}
+
+function ImportRow({row, mapping, COST, toggler, inverse_email}: {
+    row: RowType,
+    mapping: Mapping,
+    COST: number,
+    toggler: null|(() => void),
+    inverse_email: string,
+}) {
+    const parse = parseRow(mapping, row.cols, COST, inverse_email)
+    const state = row.state
+    const error = parse.error
+    const text_color = state==="imported" ? "text-blue-500" : (error ? "text-red-500" : "text-green-500")
+    return <Tr>
+        <Td>
+            {!inverse_email && state=='' && !error && toggler && <span style={{cursor: "pointer"}} onClick={toggler}>⤈</span>}
+            {inverse_email && toggler && <span style={{cursor: "pointer"}} onClick={toggler}>⤉</span>}
+        </Td>
+        <Td className={"bg-gray-300 " + text_color}>{row.state || parse.error || 'valid'}</Td>
+        <Td>{new Date(parse.timestamp||'').toLocaleString()}</Td>
+        <Td>{parse.count}</Td>
+        <Td>{parse.amountCents}</Td>
+        <Td>{parse.coffeeGrams}</Td>
+        <Td>{parse.email}</Td>
+        <Td>{parse.description}</Td>
+        {row.cols.map((cell, j) => 
+            <Td className="bg-gray-300" key={j}>{cell}</Td>
+        )}
+        <td>{JSON.stringify({row,parse})}</td>
+    </Tr>
 }
