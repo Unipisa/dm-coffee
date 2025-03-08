@@ -17,7 +17,7 @@ import Th from '../components/Th'
 
 export default function Admin({}) {
     return <Provider>
-        <Balance />
+        <Balance/>
         <TransactionYears />
     </Provider>
 }
