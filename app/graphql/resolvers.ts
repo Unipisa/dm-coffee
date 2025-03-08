@@ -106,17 +106,41 @@ export const resolvers = {
         }
   
         const result = await account.aggregate([
-          {
-            "$setWindowFields": {
-              "partitionBy": null,
-              "sortBy": { "timestamp": 1 },
-              "output": {
-                "cumulativeCount": { "$sum": "$count", "window": { "documents": ["unbounded", "current"] } },
-                "cumulativeAmountCents": { "$sum": "$amountCents", "window": { "documents": ["unbounded", "current"] } },
-                "cumulativeCoffeeGrams": { "$sum": "$coffeeGrams", "window": { "documents": ["unbounded", "current"] } }
+            {
+              "$setWindowFields": {
+                "partitionBy": null,
+                "sortBy": { "timestamp": 1 },
+                "output": {
+                  "cumulativeCount": { "$sum": "$count", "window": { "documents": ["unbounded", "current"] } },
+                  "cumulativeAmountCents": { "$sum": "$amountCents", "window": { "documents": ["unbounded", "current"] } },
+                  "cumulativeCoffeeGrams": { "$sum": "$coffeeGrams", "window": { "documents": ["unbounded", "current"] } },  
+                  "cumulativePositiveCount": { 
+                    "$sum": { "$cond": [{ "$gt": ["$count", 0] }, "$count", 0] }, 
+                    "window": { "documents": ["unbounded", "current"] }
+                  },
+                  "cumulativeNegativeCount": { 
+                    "$sum": { "$cond": [{ "$lt": ["$count", 0] }, "$count", 0] }, 
+                    "window": { "documents": ["unbounded", "current"] }
+                  },
+                  "cumulativePositiveAmountCents": { 
+                    "$sum": { "$cond": [{ "$gt": ["$amountCents", 0] }, "$amountCents", 0] }, 
+                    "window": { "documents": ["unbounded", "current"] }
+                  },
+                  "cumulativeNegativeAmountCents": { 
+                    "$sum": { "$cond": [{ "$lt": ["$amountCents", 0] }, "$amountCents", 0] }, 
+                    "window": { "documents": ["unbounded", "current"] }
+                  },
+                  "cumulativePositiveCoffeeGrams": { 
+                    "$sum": { "$cond": [{ "$gt": ["$coffeeGrams", 0] }, "$coffeeGrams", 0] }, 
+                    "window": { "documents": ["unbounded", "current"] }
+                  },
+                  "cumulativeNegativeCoffeeGrams": { 
+                    "$sum": { "$cond": [{ "$lt": ["$coffeeGrams", 0] }, "$coffeeGrams", 0] }, 
+                    "window": { "documents": ["unbounded", "current"] }
+                  }
+                }
               }
-            }
-          }, {
+            }, {
             $match: query
           }, {
             $sort: { timestamp: -1 }

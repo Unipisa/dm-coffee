@@ -27,6 +27,12 @@ export const typeDefs = gql`
     cumulativeCount: Int
     cumulativeAmountCents: Int
     cumulativeCoffeeGrams: Int
+    cumulativeNegativeCount: Int
+    cumulativePositiveCount: Int
+    cumulativeNegativeAmountCents: Int
+    cumulativePositiveAmountCents: Int
+    cumulativeNegativeCoffeeGrams: Int
+    cumulativePositiveCoffeeGrams: Int  
   }
 
   type UserTransactions {
