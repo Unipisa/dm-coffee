@@ -24,6 +24,9 @@ export const typeDefs = gql`
     email: String
     code: String
     timestamp: Timestamp
+    cumulativeCount: Int
+    cumulativeAmountCents: Int
+    cumulativeCoffeeGrams: Int
   }
 
   type UserTransactions {

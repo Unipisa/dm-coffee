@@ -105,10 +105,23 @@ export const resolvers = {
           };
         }
   
-        const result = await account
-          .find(query)
-          .sort({ timestamp: -1 })
-          .toArray();
+        const result = await account.aggregate([
+          {
+            "$setWindowFields": {
+              "partitionBy": null,
+              "sortBy": { "timestamp": 1 },
+              "output": {
+                "cumulativeCount": { "$sum": "$count", "window": { "documents": ["unbounded", "current"] } },
+                "cumulativeAmountCents": { "$sum": "$amountCents", "window": { "documents": ["unbounded", "current"] } },
+                "cumulativeCoffeeGrams": { "$sum": "$coffeeGrams", "window": { "documents": ["unbounded", "current"] } }
+              }
+            }
+          }, {
+            $match: query
+          }, {
+            $sort: { timestamp: -1 }
+          }
+        ]).toArray()
   
         return result
       },

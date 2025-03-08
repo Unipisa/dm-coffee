@@ -53,6 +53,9 @@ const GET_TRANSACTIONS = gql`
       coffeeGrams
       description
       code
+      cumulativeCount
+      cumulativeAmountCents
+      cumulativeCoffeeGrams
     }
   }`
 
@@ -65,6 +68,9 @@ type Transaction = {
   coffeeGrams: number,
   description: string,
   code: string,
+  cumulativeCount: number,
+  cumulativeAmountCents: number,
+  cumulativeCoffeeGrams: number,
 }
 
 function Transactions({year}:{year: number}) {
@@ -72,17 +78,25 @@ function Transactions({year}:{year: number}) {
     const {loading, error, data} = useQuery(GET_TRANSACTIONS, {
       variables: {year}
     })
+    const [showSums, setShowSums] = useState(false)
     if (loading) return <Loading />
     if (error) return <Error error={error}/>
     return <>
       <div className="flex">
-      {edit
-        ? <a className="ml-auto" href="#" onClick={() => setEdit(false)}>
+        <span className="ml-auto"></span>
+      {!edit && (showSums ? <a className="ml-2" href="#" onClick={() => setShowSums(false)}>
+        nascondi somme
+        </a>
+        : <a className="ml-2" href="#" onClick={() => setShowSums(true)}>
+          mostra somme
+          </a>)}
+      {!showSums && (edit
+        ? <a className="ml-2" href="#" onClick={() => setEdit(false)}>
           termina modifiche
           </a>
-        :<a className="ml-auto" href="#" onClick={() => setEdit(true)}>
+        :<a className="ml-2" href="#" onClick={() => setEdit(true)}>
           modifica
-          </a>}
+          </a>)}
         </div>
       <Table>
       <Thead>
@@ -96,12 +110,24 @@ function Transactions({year}:{year: number}) {
           <Th className="text-right">
             #
           </Th>
+          {showSums && 
+          <Th className="text-right">
+            tot #
+          </Th>}
           <Th className="text-right">
             €
           </Th>
+          {showSums && 
+          <Th className="text-right">
+            tot €
+          </Th>}
           <Th className="text-left">
             g
           </Th>
+          {showSums && 
+          <Th className="text-right">
+            tot g
+          </Th>}
           <Th className="text-left">
             description
           </Th>
@@ -113,7 +139,7 @@ function Transactions({year}:{year: number}) {
       <tbody>
         {edit && <TransactionRow edit={edit}/>}
         {data.transactions.map((transaction: Transaction) => 
-          <TransactionRow key={transaction._id} transaction={transaction} edit={edit}/>
+          <TransactionRow key={transaction._id} transaction={transaction} edit={edit} showSums={showSums}/>
         )}
       </tbody>
     </Table>
@@ -125,9 +151,10 @@ const SAVE_TRANSACTION = gql`
     transaction(_id: $_id, timestamp: $timestamp, email: $email, count: $count, amountCents: $amountCents, coffeeGrams: $coffeeGrams, description: $description)
   }`
 
-function TransactionRow({transaction, edit}:{
+function TransactionRow({transaction, edit, showSums}:{
   transaction?: Transaction,
-  edit?: boolean
+  edit?: boolean,
+  showSums?: boolean,
 }) {
   const originalEmail = transaction?.email || ''
   const originalCount = transaction?.count || 0
@@ -159,18 +186,30 @@ function TransactionRow({transaction, edit}:{
           type="number" placeholder="count" value={newCount || ''} 
           size={4} style={{width: "4em"}} onChange={e => setCount(parseInt(e.target.value) || 0)} />}
     </Td>
+    { showSums &&
+    <Td className="text-right">{transaction && 
+      transaction.cumulativeCount}
+    </Td>}
     <Td className="text-right">{transaction && !editing 
       ? <Amount cents={originalAmount}/>
       : <input 
           type="number" placeholder="cents" value={newAmount || ''} 
           size={5} style={{width: "6em"}} onChange={e => setAmount(parseInt(e.target.value))} />}
     </Td>
+    { showSums && 
+    <Td className="text-right">{transaction && 
+      <Amount cents={transaction?.cumulativeAmountCents || 0}/>}
+    </Td>}
     <Td className="text-right">{transaction && !editing
       ? (originalGrams || '')
       : <input 
           type="number" placeholder="grams" value={newGrams || ''} 
           size={5} style={{width: "6em"}} onChange={e => setGrams(parseInt(e.target.value) || 0)} />}
     </Td>
+    { showSums &&
+    <Td className="text-right">{transaction &&
+      transaction.cumulativeCoffeeGrams}
+    </Td>}
     <Td>{transaction && !editing ?originalDescription
     :<input type="text" placeholder="description" value={newDescription} onChange={e => setDescription(e.target.value)} />}
     </Td>
