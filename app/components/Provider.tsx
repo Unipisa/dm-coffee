@@ -2,7 +2,7 @@
 import { createContext, useContext } from 'react'
 import { useSession } from 'next-auth/react'
 import { SessionProvider } from 'next-auth/react'
-import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
+import { ApolloClient, HttpLink, InMemoryCache, ApolloProvider } from '@apollo/client';
 import { redirect } from "next/navigation"
 import { gql, useQuery } from '@apollo/client'
 import { Profile } from '../graphql/types'
@@ -12,7 +12,7 @@ import Error from './Error'
 import '../globals.css'; // Import global styles if you have them
 
 const apolloClient = new ApolloClient({
-    uri: '/graphql',
+    link: new HttpLink({ uri: '/graphql' }),
     cache: new InMemoryCache()
   })
   
